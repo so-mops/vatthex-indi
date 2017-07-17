@@ -5,11 +5,11 @@
 */
 
 
-#include "simpledevice.h"
+#include "vatt_secondary.h"
 
 #include <memory>
 
-std::unique_ptr<SimpleDevice> simpleDevice(new SimpleDevice());
+std::unique_ptr<Secondary> secondary(new Secondary());
 
 
 /**************************************************************************************
@@ -17,7 +17,7 @@ std::unique_ptr<SimpleDevice> simpleDevice(new SimpleDevice());
 ***************************************************************************************/
 void ISGetProperties(const char *dev)
 {
-    simpleDevice->ISGetProperties(dev);
+    secondary->ISGetProperties(dev);
 }
 
 /**************************************************************************************
@@ -25,7 +25,7 @@ void ISGetProperties(const char *dev)
 ***************************************************************************************/
 void ISNewSwitch(const char *dev, const char *name, ISState *states, char *names[], int n)
 {
-    simpleDevice->ISNewSwitch(dev, name, states, names, n);
+    secondary->ISNewSwitch(dev, name, states, names, n);
 }
 
 /**************************************************************************************
@@ -33,7 +33,7 @@ void ISNewSwitch(const char *dev, const char *name, ISState *states, char *names
 ***************************************************************************************/
 void ISNewText(const char *dev, const char *name, char *texts[], char *names[], int n)
 {
-    simpleDevice->ISNewText(dev, name, texts, names, n);
+    secondary->ISNewText(dev, name, texts, names, n);
 }
 
 /**************************************************************************************
@@ -41,7 +41,7 @@ void ISNewText(const char *dev, const char *name, char *texts[], char *names[], 
 ***************************************************************************************/
 void ISNewNumber(const char *dev, const char *name, double values[], char *names[], int n)
 {
-    simpleDevice->ISNewNumber(dev, name, values, names, n);
+    secondary->ISNewNumber(dev, name, values, names, n);
 }
 
 /**************************************************************************************
@@ -50,7 +50,7 @@ void ISNewNumber(const char *dev, const char *name, double values[], char *names
 void ISNewBLOB(const char *dev, const char *name, int sizes[], int blobsizes[], char *blobs[], char *formats[],
                char *names[], int n)
 {
-    simpleDevice->ISNewBLOB(dev, name, sizes, blobsizes, blobs, formats, names, n);
+    secondary->ISNewBLOB(dev, name, sizes, blobsizes, blobs, formats, names, n);
 }
 
 /**************************************************************************************
@@ -63,26 +63,26 @@ void ISSnoopDevice(XMLEle *root)
 
 
 
-SimpleDevice::SimpleDevice()
+Secondary::Secondary()
 {
 	ID=-1;
 	IDLog("construct\n");
 }
 
-SimpleDevice::~SimpleDevice()
+Secondary::~Secondary()
 {
 	PI_CloseConnection(ID);
 
 	IDLog("construct\n");
 }
-bool SimpleDevice::initPropeties()
+bool Secondary::initPropeties()
 {
 	
 	return true;
 }
 
 
-bool SimpleDevice::updateProperties()
+bool Secondary::updateProperties()
 {	
 	fill();
 	IDMessage( getDeviceName(), "A messagge from updateProperties!" );
@@ -94,7 +94,7 @@ bool SimpleDevice::updateProperties()
 /**************************************************************************************
 ** Client is asking us to establish connection to the device
 ***************************************************************************************/
-bool SimpleDevice::Connect()
+bool Secondary::Connect()
 {
 	
 	ConnectHex("jefftest4", 5251);
@@ -107,7 +107,7 @@ bool SimpleDevice::Connect()
 /**************************************************************************************
 ** Client is asking us to terminate connection to the device
 ***************************************************************************************/
-bool SimpleDevice::Disconnect()
+bool Secondary::Disconnect()
 {
 		
 	PI_CloseConnection(ID);
@@ -118,13 +118,13 @@ bool SimpleDevice::Disconnect()
 /**************************************************************************************
 ** INDI is asking us for our default device name
 ***************************************************************************************/
-const char *SimpleDevice::getDefaultName()
+const char *Secondary::getDefaultName()
 {
     return "Simple Device";
 }
 
 
-bool SimpleDevice::ISNewNumber(const char *dev, const char *name, double values[], char *names[], int n)
+bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], char *names[], int n)
 {
 	INumberVectorProperty * myv = getNumber(name);
 	if( strcmp(name, "PosX" ) == 0 )
@@ -177,18 +177,23 @@ bool SimpleDevice::ISNewNumber(const char *dev, const char *name, double values[
 
 }
 
-bool SimpleDevice::ISNewSwitch(const char *dev, const char * name, ISState *states, char *names[], int n)
+
+/*****************************
+* Method: Secondary::ISNewSwitch 
+*
+*
+*
+*
+*
+*
+*******************************/
+bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states, char *names[], int n)
 {
 	DefaultDevice::ISNewSwitch(dev, name, states, names, n);
 	ISwitchVectorProperty *mysvp;
 	mysvp = getSwitch(name);
-	if(strcmp("ReadHex", mysvp->name) == 0 )
-	{
-		
-		IDMessage(getDeviceName(), "we should be reading now... %i", mysvp->sp->s);
-		ReadHex();
-	}
-	else if( strcmp("correct", mysvp->name) == 0 )
+
+	if( strcmp("correct", mysvp->name) == 0 )
 	{
 		mysvp->sp[0].s == states[0];
 		IUUpdateSwitch(mysvp, states, names, n);
@@ -199,7 +204,7 @@ bool SimpleDevice::ISNewSwitch(const char *dev, const char * name, ISState *stat
 	}
 }
 
-int SimpleDevice::ConnectHex( const char *host="localhost", int port=5200 ) 
+int Secondary::ConnectHex( const char *host="localhost", int port=5200 ) 
 {
 	char szIDN[200];
 	IDMessage(getDeviceName(), "Attempting to connect to %s, %i", host, port);
@@ -223,7 +228,7 @@ int SimpleDevice::ConnectHex( const char *host="localhost", int port=5200 )
 	}
 }
 
-bool SimpleDevice::ReadHex()
+bool Secondary::ReadHex()
 {
 	if(ID<0)
 	{
@@ -233,7 +238,7 @@ bool SimpleDevice::ReadHex()
 	GetHexPos(ID, Pos);
 
 }
-bool SimpleDevice::fill()
+bool Secondary::fill()
 {
 
 	/*Translational numbers*/
@@ -265,9 +270,6 @@ bool SimpleDevice::fill()
 	IUFillNumberVector( &PosRotNV_U,  PosRotN_U, 1, getDeviceName(), "PosU", "Rotational Position U", "ALL", IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_U );
 	
-	IUFillSwitch( &readS[0], "read", "Read Hex", ISS_OFF );
-	IUFillSwitchVector( &readSV, readS, 1, getDeviceName(), "ReadHex", "Read Hex Pos", "ALL", IP_RW, ISR_1OFMANY, 0.5, IPS_IDLE );
-	defineSwitch(&readSV);
 
 	IUFillSwitch( &corrS[0], "correct", "correct", ISS_OFF );
 	IUFillSwitchVector( &corrSV, corrS, 1, getDeviceName(), "correct", "correct", "ALL", IP_WO, ISR_1OFMANY, 0.5, IPS_IDLE );
@@ -296,7 +298,7 @@ IPState s);
 */
 }
 
-void SimpleDevice::TimerHit()
+void Secondary::TimerHit()
 {
 	if(ID<0)
 		return;
@@ -323,7 +325,7 @@ void SimpleDevice::TimerHit()
 	SetTimer(1000);
 }
 
-bool SimpleDevice::MoveNext()
+bool Secondary::MoveNext()
 {
 	MoveAbs(ID, NextPos );
 }

@@ -25,11 +25,11 @@ class indiNVP
 
 
 
-class SimpleDevice : public INDI::DefaultDevice
+class Secondary : public INDI::DefaultDevice
 {
   public:
-    SimpleDevice();
-	~SimpleDevice();
+    Secondary();
+	~Secondary();
 	virtual bool initPropeties();
 	virtual bool updateProperties();
 	virtual bool ISNewNumber (const char *dev, const char *name, double values[], char *names[], int n);
@@ -45,6 +45,8 @@ class SimpleDevice : public INDI::DefaultDevice
 	Axis Pos[6];
 	Axis NextPos[6];
 
+
+	//hex positions
 	INumberVectorProperty PosLatNV_X;
 	INumber PosLatN_X[1];
 	INumberVectorProperty PosLatNV_Y;
@@ -59,9 +61,10 @@ class SimpleDevice : public INDI::DefaultDevice
 	INumber PosRotN_V[1];
 	INumberVectorProperty PosRotNV_U;
 	INumber PosRotN_U[1];
+	//end hex positions.
 
-	ISwitchVectorProperty readSV;
-	ISwitch readS[1];
+
+	
 
 	ISwitchVectorProperty corrSV;
 	ISwitch corrS[1];
