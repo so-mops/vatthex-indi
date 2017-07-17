@@ -1,31 +1,15 @@
 /*
-   INDI Developers Manual
-   Tutorial #1
 
-   "Hello INDI"
-
-   We construct a most basic (and useless) device driver to illustrate INDI.
-
-   Refer to README, which contains instruction on how to build this driver, and use it
-   with an INDI-compatible client.
+   INDI device driver for the VATT Hexapod (secondary controller)
 
 */
 
-/** \file simpledevice.cpp
-    \brief Construct a basic INDI device with only one property to connect and disconnect.
-    \author Jasem Mutlaq
-
-    \example simpledevice.cpp
-    A very minimal device! It also allows you to connect/disconnect and performs no other functions.
-*/
 
 #include "simpledevice.h"
 
 #include <memory>
 
 std::unique_ptr<SimpleDevice> simpleDevice(new SimpleDevice());
-
-
 
 
 /**************************************************************************************
@@ -79,7 +63,6 @@ void ISSnoopDevice(XMLEle *root)
 
 
 
-
 SimpleDevice::SimpleDevice()
 {
 	ID=-1;
@@ -97,7 +80,6 @@ bool SimpleDevice::initPropeties()
 	
 	return true;
 }
-
 
 
 bool SimpleDevice::updateProperties()
