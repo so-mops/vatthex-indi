@@ -131,37 +131,80 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	{
 		
 		NextPos[XX].pos = values[0];
+		
+		if( corrS[0].s == ISS_ON)
+			correct(NextPos, el,temp);
+
 		MoveOneAxis( ID, &NextPos[XX] );
+		
+		if( corrS[0].s == ISS_ON)
+			uncorrect(NextPos, el,temp);
+		
 	}
 	if( strcmp(name, "PosY" ) == 0 )
 	{
 		
-		NextPos[YY].pos = values[0];
+		NextPos[YY].pos = values[0];	
+		if( corrS[0].s == ISS_ON)
+			correct(NextPos, el,temp);
+
 		MoveOneAxis( ID, &NextPos[YY] );
+		
+		if( corrS[0].s == ISS_ON)
+			uncorrect(NextPos, el,temp);
+
 	}
 	if( strcmp(name, "PosZ" ) == 0 )
 	{
 		
-		NextPos[ZZ].pos = values[0];
+		NextPos[ZZ].pos = values[0];	
+		if( corrS[0].s == ISS_ON)
+			correct(NextPos, el,temp);
+
 		MoveOneAxis( ID, &NextPos[ZZ] );
+		
+		if( corrS[0].s == ISS_ON)
+			uncorrect(NextPos, el,temp);
+
 	}
 	if( strcmp(name, "PosW" ) == 0 )
 	{
 		
-		NextPos[WW].pos = values[0];
+		NextPos[WW].pos = values[0];	
+		if( corrS[0].s == ISS_ON)
+			correct(NextPos, el,temp);
+
 		MoveOneAxis( ID, &NextPos[WW] );
+		
+		if( corrS[0].s == ISS_ON)
+			uncorrect(NextPos, el,temp);
+
 	}
 	if( strcmp(name, "PosV" ) == 0 )
 	{
 		
-		NextPos[VV].pos = values[0];
+		NextPos[VV].pos = values[0];	
+		if( corrS[0].s == ISS_ON)
+			correct(NextPos, el,temp);
+
 		MoveOneAxis( ID, &NextPos[VV] );
+		
+		if( corrS[0].s == ISS_ON)
+			uncorrect(NextPos, el,temp);
+
 	}
 	if( strcmp(name, "PosU" ) == 0 )
 	{
 		
-		NextPos[UU].pos = values[0];
+		NextPos[UU].pos = values[0];	
+		if( corrS[0].s == ISS_ON)
+			correct(NextPos, el,temp);
+
 		MoveOneAxis( ID, &NextPos[UU] );
+		
+		if( corrS[0].s == ISS_ON)
+			uncorrect(NextPos, el,temp);
+
 	}
 	
 
@@ -195,12 +238,28 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 
 	if( strcmp("correct", mysvp->name) == 0 )
 	{
-		mysvp->sp[0].s == states[0];
-		IUUpdateSwitch(mysvp, states, names, n);
+
+		if( corrS[0].s == ISS_OFF )
+			corrS[0].s = ISS_ON;
+		else
+			corrS[0].s = ISS_OFF;
+
+		IDSetSwitch( &corrSV, NULL);
 	}
 	else if( strcmp("ref", mysvp->name) == 0 )
 	{
 		ReferenceIfNeeded(ID, Pos);
+	}
+}
+
+bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char *names[], int n)
+{
+	char resp[300];
+	if( strcmp(name, "cmdv") == 0)
+	{
+		GenericCommand( ID, texts[0], resp, 300 );
+		strncpy( cmdT[0].text, resp, 39 );
+		IDSetText( &cmdTV, "%s", resp );
 	}
 }
 
@@ -240,7 +299,7 @@ bool Secondary::ReadHex()
 }
 bool Secondary::fill()
 {
-
+	IDMessage(getDeviceName(), "FILLING");
 	/*Translational numbers*/
 	IUFillNumber(&PosLatN_X[0] , "X", "X Axis ", "%5.4f", -5.0, 5.0, 0.001, 0);
 	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosX", "Linear Position X", "ALL", IP_RW, 0.5, IPS_IDLE );
@@ -271,33 +330,46 @@ bool Secondary::fill()
 	defineNumber( &PosRotNV_U );
 	
 
+	//Corrections
 	IUFillSwitch( &corrS[0], "correct", "correct", ISS_OFF );
 	IUFillSwitchVector( &corrSV, corrS, 1, getDeviceName(), "correct", "correct", "ALL", IP_WO, ISR_1OFMANY, 0.5, IPS_IDLE );
 	defineSwitch(&corrSV);
 
+	//Reference the struts
 	IUFillSwitch( &refS[0], "ref", "Reference", ISS_OFF );
 	IUFillSwitchVector( &refSV, refS, 1, getDeviceName(), "ref", "Reference", "ALL", IP_WO, ISR_1OFMANY, 0.5, IPS_IDLE );
 	defineSwitch(&refSV);
 
 
+	IUFillText( cmdT, "cmd", "Command", "WTF!!!" );
+	IUFillTextVector( &cmdTV, cmdT, 1, getDeviceName(), "cmdv", "Command", "ALL", IP_RW, 0.5, IPS_IDLE );
+	defineText( &cmdTV );
+	//IDSetText( &cmdTV, "I AM FUCKING TRYING TO SET THE TEXT HERE ASSHOLE!!!!!" );
 
-/*
-UFillSwitchVector(
-ISwitchVectorProperty *svp, 
-ISwitch *sp, 
-int nsp, 
-const char 
-*dev, 
-const char *name,
-const char *label, 
-const char *group, 
-IPerm p, 
-ISRule r, 
-double timeout, 
-IPState s);
-*/
+
+	IUFillText( errT, "err", "Error", "No Error" );
+	IUFillTextVector( &errTV, errT, 1, getDeviceName(), "err", "Error", "ALL", IP_RO, 0.5, IPS_IDLE );
+	defineText( &errTV );
+
+	IDMessage(getDeviceName(), "Done Filling");
+
 }
 
+
+
+/******************************
+* Secondary::TimerHit
+* Descritpion:
+*	Idle time updates
+*
+*
+*
+*
+*
+*
+*
+*
+********************************/
 void Secondary::TimerHit()
 {
 	if(ID<0)
@@ -306,23 +378,32 @@ void Secondary::TimerHit()
 		
 	Axis *iter;
 	INumberVectorProperty *IAxis;
+	int errno;
+	char err[300];
 	
-	GetHexPos(ID, Pos);
-
+	
+	GetHexPos( ID, Pos );
+	if (corrS[0].s == ISS_ON)
+	{
+		uncorrect(Pos, el, temp);
+		
+	}
+		
 	char name[] = "PosX";
-	for(iter=Pos; iter!=&Pos[6]; iter++)
+	for( iter=Pos; iter!=&Pos[6]; iter++ )
 	{
 		name[3] = iter->letter[0];
-		IAxis = getNumber(name);
+		IAxis = getNumber( name );
 		IAxis->np->value = iter->pos;
 		IDSetNumber(IAxis, NULL);
 		//IDMessage(getDeviceName(), "%s", name);
 		//axis = getNumber();
 	}
 
-	//IDMessage(getDeviceName(), "x=%f, y=%f, z=%f, w=%f,v=%f, y=%f", Pos[XX].pos, Pos[YY].pos, Pos[ZZ].pos, Pos[WW].pos, Pos[VV].pos, Pos[UU].pos);
-
-	SetTimer(1000);
+	errno = GetError( ID, err, 300 );
+	sprintf( errT[0].text, "%i: %s",errno, err );
+	IDSetText( &errTV, NULL );
+	SetTimer( (int) 100 );
 }
 
 bool Secondary::MoveNext()

@@ -34,6 +34,9 @@ class Secondary : public INDI::DefaultDevice
 	virtual bool updateProperties();
 	virtual bool ISNewNumber (const char *dev, const char *name, double values[], char *names[], int n);
 	virtual bool ISNewSwitch(const char *dev, const char *name, ISState *states, char *names[], int n);
+	
+	virtual bool ISNewText(const char *dev, const char *name, char *texts[], char *names[], int n);
+
 	bool ReadHex();
 	bool MoveNext();
 	int ConnectHex(const char *host, int port);
@@ -71,8 +74,16 @@ class Secondary : public INDI::DefaultDevice
 	
 	ISwitchVectorProperty refSV;
 	ISwitch refS[1];
+
 	
+	ITextVectorProperty cmdTV;
+	IText cmdT[1];
+
+	ITextVectorProperty errTV;
+	IText errT[1];
 	
+	double temp = 20.0;
+	double el = 3.14159/4.0;
 
   protected:
     bool Connect();
