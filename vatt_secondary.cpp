@@ -403,7 +403,8 @@ void Secondary::TimerHit()
 	errno = GetError( ID, err, 300 );
 	sprintf( errT[0].text, "%i: %s",errno, err );
 	IDSetText( &errTV, NULL );
-	SetTimer( (int) 100 );
+	SetTimer( (int) 1000 );
+	
 }
 
 bool Secondary::MoveNext()
