@@ -85,9 +85,11 @@ class Secondary : public INDI::DefaultDevice
 	double temp = 20.0;
 	double el = 3.14159/4.0;
 
+
   protected:
     bool Connect();
     bool Disconnect();
     const char *getDefaultName();
-	
+	void SetReadyState();
+	void SetMoveState();
 };
