@@ -158,68 +158,76 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosY" ) == 0 )
 	{
+		NextPos[YY].pos = values[0];
+		deepcopy( CorrNextPos, NextPos );
+		correct( CorrNextPos, el, temp );
 		
-		NextPos[YY].pos = values[0];	
-		if( corrS[0].s == ISS_ON)
-			correct(NextPos, el,temp);
-
-		MoveOneAxis( ID, &NextPos[YY] );
+		if( corrS[0].s == ISS_ON )
+				
+				MoveOneAxis( ID, &CorrNextPos[YY] );
+		else
+				
+				MoveOneAxis( ID, &NextPos[YY] );
+	
 		
-		if( corrS[0].s == ISS_ON)
-			uncorrect(NextPos, el,temp);
-
 	}
 	if( strcmp(name, "PosZ" ) == 0 )
 	{
+		NextPos[ZZ].pos = values[0];
+		deepcopy( CorrNextPos, NextPos );
+		correct( CorrNextPos, el, temp );
 		
-		NextPos[ZZ].pos = values[0];	
-		if( corrS[0].s == ISS_ON)
-			correct(NextPos, el,temp);
-
-		MoveOneAxis( ID, &NextPos[ZZ] );
-		
-		if( corrS[0].s == ISS_ON)
-			uncorrect(NextPos, el,temp);
-
+		if( corrS[0].s == ISS_ON )
+				
+				MoveOneAxis( ID, &CorrNextPos[ZZ] );
+		else
+				
+				MoveOneAxis( ID, &NextPos[ZZ] );
+	
+	
 	}
 	if( strcmp(name, "PosW" ) == 0 )
 	{
+		NextPos[WW].pos = values[0];
+		deepcopy( CorrNextPos, NextPos );
+		correct( CorrNextPos, el, temp );
 		
-		NextPos[WW].pos = values[0];	
-		if( corrS[0].s == ISS_ON)
-			correct(NextPos, el,temp);
+		if( corrS[0].s == ISS_ON )
+				
+				MoveOneAxis( ID, &CorrNextPos[WW] );
+		else
+				
+				MoveOneAxis( ID, &NextPos[WW] );
 
-		MoveOneAxis( ID, &NextPos[WW] );
 		
-		if( corrS[0].s == ISS_ON)
-			uncorrect(NextPos, el,temp);
-
 	}
 	if( strcmp(name, "PosV" ) == 0 )
 	{
+		NextPos[VV].pos = values[0];
+		deepcopy( CorrNextPos, NextPos );
+		correct( CorrNextPos, el, temp );
 		
-		NextPos[VV].pos = values[0];	
-		if( corrS[0].s == ISS_ON)
-			correct(NextPos, el,temp);
+		if( corrS[0].s == ISS_ON )
+				
+				MoveOneAxis( ID, &CorrNextPos[VV] );
+		else
+				
+				MoveOneAxis( ID, &NextPos[VV] );
 
-		MoveOneAxis( ID, &NextPos[VV] );
-		
-		if( corrS[0].s == ISS_ON)
-			uncorrect(NextPos, el,temp);
-
+	
 	}
 	if( strcmp(name, "PosU" ) == 0 )
 	{
+		NextPos[UU].pos = values[0];
+		deepcopy( CorrNextPos, NextPos );
+		correct( CorrNextPos, el, temp );
 		
-		NextPos[UU].pos = values[0];	
-		if( corrS[0].s == ISS_ON)
-			correct(NextPos, el,temp);
-
-		MoveOneAxis( ID, &NextPos[UU] );
-		
-		if( corrS[0].s == ISS_ON)
-			uncorrect(NextPos, el,temp);
-
+		if( corrS[0].s == ISS_ON )
+				
+				MoveOneAxis( ID, &CorrNextPos[UU] );
+		else
+				
+				MoveOneAxis( ID, &NextPos[UU] );
 	}
 	
 
