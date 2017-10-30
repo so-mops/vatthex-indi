@@ -46,10 +46,14 @@ class Secondary : public INDI::DefaultDevice
 	virtual void TimerHit();
 
 	int GetTempAndEl( );
+
+	void deepcopy(Axis *, Axis *);
 	
 	
 	Axis Pos[6];
 	Axis NextPos[6];
+	Axis CorrPos[6];
+	Axis CorrNextPos[6];
 
 
 	//hex positions
@@ -96,6 +100,6 @@ class Secondary : public INDI::DefaultDevice
     bool Connect();
     bool Disconnect();
     const char *getDefaultName();
-	void SetReadyState();
-	void SetMoveState();
+	bool SetReadyState();
+	bool SetMoveState();
 };

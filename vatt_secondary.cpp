@@ -6,7 +6,7 @@
 #include "vatt_secondary.h"
 
 #include <memory>
-
+#include <cmath>
 #define PI_PORTNUM 50000
 
 std::unique_ptr<Secondary> secondary(new Secondary());
@@ -142,14 +142,18 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	{
 		
 		NextPos[XX].pos = values[0];
+		deepcopy( CorrNextPos, NextPos );
+		correct( CorrNextPos, el, temp );
 		
-		if( corrS[0].s == ISS_ON)
-			correct(NextPos, el,temp);
+		if( corrS[0].s == ISS_ON )
+				
+				MoveOneAxis( ID, &CorrNextPos[XX] );
+		else
+				
+				MoveOneAxis( ID, &NextPos[XX] );
+				
 
-		MoveOneAxis( ID, &NextPos[XX] );
 		
-		if( corrS[0].s == ISS_ON)
-			uncorrect(NextPos, el,temp);
 		
 	}
 	if( strcmp(name, "PosY" ) == 0 )
@@ -250,10 +254,17 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 	IUUpdateSwitch(mysvp, states, names, n);
 	if( strcmp("correct", mysvp->name) == 0 )
 	{
-		if(mysvp->sp[0].s == ISS_ON)
+		deepcopy(CorrNextPos, NextPos);
+		if( mysvp->sp[0].s == ISS_ON )
+		{
+			correct( CorrNextPos, el, temp);
 			mysvp->s = IPS_OK;
+		}
 		else
+		{
 			mysvp->s = IPS_IDLE;
+			GetHexPos( ID, Pos );
+		}
 		IDSetSwitch( &corrSV, NULL);
 	}
 	else if( strcmp("ref", mysvp->name) == 0 )
@@ -414,22 +425,55 @@ bool Secondary::fill()
 ********************************/
 void Secondary::TimerHit()
 {
-	if(ID<0)
+	if( ID < 0 )
 		return;
 
 		
 	Axis *iter;
+	Axis ActualPos[6]; //The real position of the hexapod without corrections
 	INumberVectorProperty *IAxis;
-	int isReady=0;
+	bool isMoving;
+	int isReady = 0;
 	int errno;
 	char err[300];
 	
 	
+
 	GetHexPos( ID, Pos );
-	if (corrS[0].s == ISS_ON)
+    deepcopy(CorrPos, Pos);
+
+	isMoving = SetMoveState();
+	isReady = SetReadyState();
+
+	if ( corrS[0].s == ISS_ON )
 	{
+		//remove correction for display purpose.
 		uncorrect(Pos, el, temp);
-		
+
+		//if we are not moving and the difference
+		//between the next pos and the corrected next
+		//pos is high enough (because el or temp changed) 
+		//update the position
+		if(!isMoving)
+		{
+				
+			for(int ii=0; ii<6; ii++)
+			{
+				IDMessage( getDeviceName(), "We sbould be moving %i %f %f %f", 
+					ii, 
+					CorrNextPos[ii].pos, 
+					NextPos[ii].pos, 
+					fabs( CorrNextPos[ii].pos - NextPos[ii].pos ) );
+
+				if( fabs( CorrNextPos[ii].pos - NextPos[ii].pos ) > 0.001 )
+				{
+					IDMessage(getDeviceName(), "We should be here");
+					MoveOneAxis(ID, &CorrNextPos[ii] );
+				}
+			}
+		}
+
+
 	}
 		
 	char name[] = "PosX";
@@ -438,7 +482,7 @@ void Secondary::TimerHit()
 		name[3] = iter->letter[0];
 		IAxis = getNumber( name );
 		IAxis->np->value = iter->pos;
-		IDSetNumber(IAxis, NULL);
+		IDSetNumber( IAxis, NULL );
 	}
 
 	errno = GetError( ID, err, 300 );
@@ -451,11 +495,12 @@ void Secondary::TimerHit()
 	IDSetText( &errTV, NULL );
 	SetTimer( (int) 1000 );
 	
-	SetReadyState();
-	SetMoveState();
 }
 
-void Secondary::SetReadyState()
+
+
+
+bool Secondary::SetReadyState()
 {
 	INumberVectorProperty *IAxis;
 	
@@ -476,7 +521,7 @@ void Secondary::SetReadyState()
 		IDSetNumber(IAxis, NULL);
 		
 	}
-	
+	return (bool) isReady;	
 }
 
 /****************************
@@ -492,13 +537,13 @@ void Secondary::SetReadyState()
  *
  * ****************************/
 
-void Secondary::SetMoveState()
+bool Secondary::SetMoveState()
 {
 	INumberVectorProperty *IAxis;
 	
 	Axis *iter;
 	char name[] = "PosX";
-	BOOL isMoving;
+	int isMoving;
 	for( iter=Pos; iter!=&Pos[6]; iter++ )
 	{
 		name[3] = iter->letter[0];
@@ -512,6 +557,19 @@ void Secondary::SetMoveState()
 		
 	}
 	
+	return (bool) isMoving;
+}
+
+void Secondary::deepcopy(Axis *copyto, Axis *copyfrom)
+{
+		for(int ii=0; ii<6; ii++)
+		{
+
+			copyto[ii].letter = copyfrom[ii].letter;
+			copyto[ii].ii = copyfrom[ii].ii;
+			copyto[ii].pos = copyfrom[ii].pos;
+
+		}
 }
 
 int Secondary::GetTempAndEl()
