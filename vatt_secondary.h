@@ -30,7 +30,7 @@ class Secondary : public INDI::DefaultDevice
   public:
     Secondary();
 	~Secondary();
-	virtual bool initPropeties();
+	virtual bool initProperties();
 	virtual bool updateProperties();
 	virtual bool ISNewNumber (const char *dev, const char *name, double values[], char *names[], int n);
 	virtual bool ISNewSwitch(const char *dev, const char *name, ISState *states, char *names[], int n);
@@ -44,6 +44,9 @@ class Secondary : public INDI::DefaultDevice
 	int ID;
 	bool setNumber(INumberVectorProperty *, double values, char * names[], int);
 	virtual void TimerHit();
+
+	int GetTempAndEl( );
+	
 	
 	Axis Pos[6];
 	Axis NextPos[6];
@@ -75,7 +78,10 @@ class Secondary : public INDI::DefaultDevice
 	ISwitchVectorProperty refSV;
 	ISwitch refS[1];
 
-	
+	ITextVectorProperty HexAddrTV;
+	IText HexAddrT[1];
+
+
 	ITextVectorProperty cmdTV;
 	IText cmdT[1];
 

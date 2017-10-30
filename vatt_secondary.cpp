@@ -7,6 +7,8 @@
 
 #include <memory>
 
+#define PI_PORTNUM 50000
+
 std::unique_ptr<Secondary> secondary(new Secondary());
 
 
@@ -73,15 +75,22 @@ Secondary::~Secondary()
 
 	IDLog("construct\n");
 }
-bool Secondary::initPropeties()
+bool Secondary::initProperties()
 {
-	
+	DefaultDevice::initProperties();
+
+	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "128.196.208.218" );
+	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RO, 0.5, IPS_IDLE );
+	defineText(&HexAddrTV);
+	IDSetText(&HexAddrTV, "should show the IP");
+
 	return true;
 }
 
 
 bool Secondary::updateProperties()
 {	
+
 	fill();
 	SetTimer(1000);
 	return true;
@@ -93,8 +102,12 @@ bool Secondary::updateProperties()
 ***************************************************************************************/
 bool Secondary::Connect()
 {
-	
-	if(!ConnectHex("jefftest4", 5251))
+
+
+	//the port number is hardcoded because the 
+	//PI C-887 only allows you to talk to it on
+	//port 50000. 
+	if(!ConnectHex(HexAddrT[0].text, PI_PORTNUM))
 		return false;
 	GetHexPos(ID, Pos);
 	GetHexPos(ID, NextPos);
@@ -265,6 +278,16 @@ bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char
 	}
 }
 
+/************************************************
+ * ConnectHex
+ * Args
+ *
+ *
+ *
+ *
+ *
+ *
+ * **********************************************/
 int Secondary::ConnectHex( const char *host="localhost", int port=5200 ) 
 {
 	char szIDN[200];
@@ -300,12 +323,27 @@ bool Secondary::ReadHex()
 	GetHexPos(ID, Pos);
 
 }
+
+/**************************************************
+ * fill
+ * Description:
+ * 	This is where all the indi properties 
+ * 	are initialized. 
+ *
+ *
+ *
+ *
+ *
+ * ***********************************************/
+
 bool Secondary::fill()
 {
 	/*Translational numbers*/
 	const char linposgrp[] = "Linear Position";
 	const char rotposgrp[] = "Rotational Position";
-		
+
+			
+
 	IUFillNumber(&PosLatN_X[0] , "X", "X Axis ", "%5.4f", -5.0, 5.0, 0.001, 0);
 	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_X );
@@ -441,6 +479,19 @@ void Secondary::SetReadyState()
 	
 }
 
+/****************************
+ * SetMoveState
+ *
+ * Sets the state of the positions
+ * hexapod axes. If its moving
+ * ts IPS_BUSY, if not IPS_IDLE
+ * which show up as Yelow and 
+ * transparent respectively in the gui
+ *
+ *
+ *
+ * ****************************/
+
 void Secondary::SetMoveState()
 {
 	INumberVectorProperty *IAxis;
@@ -463,6 +514,12 @@ void Secondary::SetMoveState()
 	
 }
 
+int Secondary::GetTempAndEl()
+{
+
+	temp = 20.0;
+	el = 3.14159/4.0;
+}
 
 bool Secondary::MoveNext()
 {
