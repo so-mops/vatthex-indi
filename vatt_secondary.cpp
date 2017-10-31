@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <cmath>
+#include "vatttel_com.h"
 #define PI_PORTNUM 50000
 
 std::unique_ptr<Secondary> secondary(new Secondary());

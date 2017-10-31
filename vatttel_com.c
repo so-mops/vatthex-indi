@@ -10,6 +10,8 @@
 #include <arpa/inet.h>
 #include <time.h>
 
+#include "vatttel_com.h"
+
 /*
  * Read the index {0-63} of of the vatt pkt as
  * an integer. This can later be converted 
@@ -17,7 +19,7 @@
  *
  * 
   */
-int read_sec( char pkt[], int index )
+int read_value( signed char pkt[], int index )
 {
 
 	int temp;
@@ -38,10 +40,9 @@ int read_sec( char pkt[], int index )
  * Populate the cmd_pkt for retrieving the secondary1
  * vatttel server information.
  */
-void put_cmd( char cmd_pkt[] )
+void put_cmd( signed char cmd_pkt[], int command )
 {
 	//VATT_CMD_STATUS_SECONDARY1
-	int command = 0x0a13;
 
 	//THe VATT header
 	cmd_pkt[0] = 'V';
@@ -56,7 +57,7 @@ void put_cmd( char cmd_pkt[] )
 }
 
 
-int main(int argc, char *argv[])
+int query_vatttel( int command, int index, double *value )
 {
     int sockfd = 0, n = 0;
     signed char recvBuff[64];
@@ -64,7 +65,7 @@ int main(int argc, char *argv[])
     char rcv_pkt[64];
 
     //Populate the secondary status request pkt.
-    put_cmd(pkt);
+    put_cmd(pkt, command );
 
     //Socket stuff 
     struct sockaddr_in serv_addr; 
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
     serv_addr.sin_family = AF_INET; //address type (IPV4)
     serv_addr.sin_port = htons(1040); //port
 
-    if(inet_pton(AF_INET, "10.0.1.10", &serv_addr.sin_addr)<=0)
+    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0)
     {
         printf("\n inet_pton error occured\n");
         return 1;
@@ -99,17 +100,12 @@ int main(int argc, char *argv[])
     //read the 64 bytes
     n=read(sockfd, recvBuff, sizeof(recvBuff));
 
-	//print a timestamp
-	printf("%ld ", time(NULL) );    
 
 	int i;
 
 	//print the values one by one seperated by white space.
 	//divide by 3600000.0 to convert to GUI units or arcseconds. 
-	for( i=0; i<13; i++ )
-	{
-		printf( "%f ", read_sec(recvBuff, i)/3600000.0 );
-	}
+	*value = read_value(recvBuff, index)/3600000.0;
 	//give us a new line. 
 	printf("\n");
      
@@ -121,4 +117,25 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+double GetStrutTemp( )
+{
+	double temp;
+	query_vatttel(VATT_CMD_STATUS_TEMPS, STRUT_INDEX, &temp );
+	return temp;
+
+}
+
+
+double GetAlt( )
+{
+	double alt;
+	query_vatttel(VATT_CMD_STATUS_ALTAZ, ALT_INDEX, &alt );
+	return alt;
+
+}
+
+int main(int argc, char **argv)
+{
+	printf("the tel alt is %f\n", GetAlt());
+}
 
