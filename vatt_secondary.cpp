@@ -81,7 +81,7 @@ bool Secondary::initProperties()
 	DefaultDevice::initProperties();
 
 	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "128.196.208.218" );
-	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RO, 0.5, IPS_IDLE );
+	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RW, 0.5, IPS_IDLE );
 	defineText(&HexAddrTV);
 	IDSetText(&HexAddrTV, "should show the IP");
 
@@ -290,11 +290,19 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char *names[], int n)
 {
 	char resp[300];
+
+
 	if( strcmp(name, "cmdv") == 0)
 	{
 		GenericCommand( ID, texts[0], resp, 300 );
 		strncpy( cmdT[0].text, resp, 39 );
 		IDSetText( &cmdTV, "%s", resp );
+	}
+	if( strcmp(name, "hexipvp") == 0) 
+	{
+		IDMessage(getDeviceName(), "HEER");
+		strcpy(HexAddrT[0].text, texts[0] );
+		IDSetText(&HexAddrTV, NULL);
 	}
 }
 

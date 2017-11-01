@@ -134,8 +134,4 @@ double GetAlt( )
 
 }
 
-int main(int argc, char **argv)
-{
-	printf("the tel alt is %f\n", GetAlt());
-}
 
