@@ -1,3 +1,4 @@
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -9,6 +10,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <time.h>
+
 
 #include "vatttel_com.h"
 
@@ -57,7 +59,7 @@ void put_cmd( signed char cmd_pkt[], int command )
 }
 
 
-int query_vatttel( int command, int index, double *value )
+int query_vatttel( int command, int index, double *value, char *errmsg )
 {
     int sockfd = 0, n = 0;
     signed char recvBuff[64];
@@ -74,6 +76,7 @@ int query_vatttel( int command, int index, double *value )
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         printf("\n Error : Could not create socket \n");
+	strcpy(errmsg, " Error : Could not create socket ");
         return 1;
     } 
 	
@@ -82,15 +85,17 @@ int query_vatttel( int command, int index, double *value )
     serv_addr.sin_family = AF_INET; //address type (IPV4)
     serv_addr.sin_port = htons(1040); //port
 
-    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0)
+    if(inet_pton(AF_INET, "10.0.1.10", &serv_addr.sin_addr)<=0)
     {
         printf("\n inet_pton error occured\n");
+        strcpy(errmsg, " inet_pton error occured");
         return 1;
     } 
 
     if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
        printf("\n Error : Connect Failed \n");
+       strcpy(errmsg, " Error : Connect Failed ");
        return 1;
     }
 
@@ -112,24 +117,25 @@ int query_vatttel( int command, int index, double *value )
     if(n < 0)
     {
         printf("\n Read error \n");
+        strcpy(errmsg, " Read error ");
     } 
-
+    close(sockfd);
     return 0;
 }
 
-double GetStrutTemp( )
+double GetStrutTemp(char *msg )
 {
 	double temp;
-	query_vatttel(VATT_CMD_STATUS_TEMPS, STRUT_INDEX, &temp );
+	query_vatttel(VATT_CMD_STATUS_TEMPS, STRUT_INDEX, &temp, msg );
 	return temp;
 
 }
 
 
-double GetAlt( )
+double GetAlt(char *msg )
 {
 	double alt;
-	query_vatttel(VATT_CMD_STATUS_ALTAZ, ALT_INDEX, &alt );
+	query_vatttel(VATT_CMD_STATUS_ALTAZ, ALT_INDEX, &alt, msg );
 	return alt;
 
 }

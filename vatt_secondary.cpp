@@ -9,6 +9,8 @@
 #include <cmath>
 #include "vatttel_com.h"
 #define PI_PORTNUM 50000
+#define MILI2MICRON 1e3
+#define DEG2ASEC 3600.0
 
 std::unique_ptr<Secondary> secondary(new Secondary());
 
@@ -80,7 +82,7 @@ bool Secondary::initProperties()
 {
 	DefaultDevice::initProperties();
 
-	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "128.196.208.218" );
+	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "10.0.3.10" );
 	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RW, 0.5, IPS_IDLE );
 	defineText(&HexAddrTV);
 	IDSetText(&HexAddrTV, "should show the IP");
@@ -123,7 +125,6 @@ bool Secondary::Disconnect()
 {
 		
 	PI_CloseConnection(ID);
-    IDMessage(getDeviceName(), "Simple device disconnected successfully!");
     return true;
 }
 
@@ -142,7 +143,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	if( strcmp(name, "PosX" ) == 0 )
 	{
 		
-		NextPos[XX].pos = values[0];
+		NextPos[XX].pos = values[0]/MILI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -159,7 +160,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosY" ) == 0 )
 	{
-		NextPos[YY].pos = values[0];
+		NextPos[YY].pos = values[0]/MILI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -174,7 +175,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosZ" ) == 0 )
 	{
-		NextPos[ZZ].pos = values[0];
+		NextPos[ZZ].pos = values[0]/MILI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -189,7 +190,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosW" ) == 0 )
 	{
-		NextPos[WW].pos = values[0];
+		NextPos[WW].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -204,7 +205,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosV" ) == 0 )
 	{
-		NextPos[VV].pos = values[0];
+		NextPos[VV].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -219,7 +220,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosU" ) == 0 )
 	{
-		NextPos[UU].pos = values[0];
+		NextPos[UU].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -236,7 +237,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	for(int ii=0; ii<n; ii++)
 	{
 		
-		IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
+		//IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
 		
 			}
 	IUUpdateNumber(myv, values, names, n);
@@ -292,17 +293,18 @@ bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char
 	char resp[300];
 
 
-	if( strcmp(name, "cmdv") == 0)
+	if( strcmp( name, "cmdv" ) == 0 )
 	{
 		GenericCommand( ID, texts[0], resp, 300 );
 		strncpy( cmdT[0].text, resp, 39 );
 		IDSetText( &cmdTV, "%s", resp );
 	}
-	if( strcmp(name, "hexipvp") == 0) 
+
+	if( strcmp( name, "hexipvp" ) == 0 ) 
 	{
-		IDMessage(getDeviceName(), "HEER");
-		strcpy(HexAddrT[0].text, texts[0] );
-		IDSetText(&HexAddrTV, NULL);
+		IDMessage( getDeviceName(), "Setting ip address %s", texts[0] );
+		strcpy( HexAddrT[0].text, texts[0] );
+		IDSetText( &HexAddrTV, NULL );
 	}
 }
 
@@ -372,37 +374,37 @@ bool Secondary::fill()
 
 			
 
-	IUFillNumber(&PosLatN_X[0] , "X", "X Axis ", "%5.4f", -5.0, 5.0, 0.001, 0);
+	IUFillNumber(&PosLatN_X[0] , "X", "X Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_X );
 	
-	IUFillNumber(&PosLatN_Y[0] , "Y", "Y Axis ", "%5.4f", -5.0, 5.0, 0.001, 0);
+	IUFillNumber(&PosLatN_Y[0] , "Y", "Y Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_Y );
 
-	IUFillNumber(&PosLatN_Z[0] , "Z", "Focus ", "%5.4f", -5.0, 5.0, 0.001, 0);
+	IUFillNumber(&PosLatN_Z[0] , "Z", "Focus ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_Z,  PosLatN_Z, 1, getDeviceName(), "PosZ", "Linear Position Z", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_Z );
 
 
 	/*rotational numbers*/
-	IUFillNumber(&PosRotN_W[0] , "W", "Tip X ", "%5.4f", -5.0, 5.0, 0.001, 0);
+	IUFillNumber(&PosRotN_W[0] , "W", "Tip X ", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_W,  PosRotN_W, 1, getDeviceName(), "PosW", "Rotational Position W", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_W );
 
 
-	IUFillNumber(&PosRotN_V[0] , "V", "Tip Y", "%5.4f", -5.0, 5.0, 0.001, 0);
+	IUFillNumber(&PosRotN_V[0] , "V", "Tip Y", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_V,  PosRotN_V, 1, getDeviceName(), "PosV", "Rotational Position V", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_V );
 
 
-	IUFillNumber(&PosRotN_U[0] , "U", "U Axis ", "%5.4f", -5.0, 5.0, 0.001, 0);
+	IUFillNumber(&PosRotN_U[0] , "U", "U Axis ", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_U,  PosRotN_U, 1, getDeviceName(), "PosU", "Rotational Position U", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_U );
 	
 
 	//Corrections
-	IUFillSwitch( &corrS[0], "correct", "correct", ISS_OFF );
+	IUFillSwitch( &corrS[0], "correct", "Auto Collimate", ISS_OFF );
 	IUFillSwitchVector( &corrSV, corrS, 1, getDeviceName(), "correct", "correct", "ALL", IP_WO, ISR_NOFMANY, 0.5, IPS_IDLE );
 	defineSwitch(&corrSV);
 
@@ -415,7 +417,6 @@ bool Secondary::fill()
 	IUFillText( cmdT, "cmd", "Command", "" );
 	IUFillTextVector( &cmdTV, cmdT, 1, getDeviceName(), "cmdv", "Command", "ALL", IP_RW, 0.5, IPS_IDLE );
 	defineText( &cmdTV );
-	//IDSetText( &cmdTV, "I AM FUCKING TRYING TO SET THE TEXT HERE ASSHOLE!!!!!" );
 
 
 	IUFillText( errT, "err", "Error", "No Error" );
@@ -453,15 +454,23 @@ void Secondary::TimerHit()
 	int isReady = 0;
 	int errno;
 	char err[300];
-	
+	double unitconversion;
 	
 
 	GetHexPos( ID, Pos );
-    deepcopy(CorrPos, Pos);
+	deepcopy(CorrPos, Pos);
 
 	isMoving = SetMoveState();
 	isReady = SetReadyState();
-
+	
+	if(vatttel_counter == 5)
+	{
+		GetTempAndEl();
+		vatttel_counter = 0;
+	}
+	else
+		vatttel_counter++;
+	
 	if ( corrS[0].s == ISS_ON )
 	{
 		//remove correction for display purpose.
@@ -476,15 +485,8 @@ void Secondary::TimerHit()
 				
 			for(int ii=0; ii<6; ii++)
 			{
-				IDMessage( getDeviceName(), "We sbould be moving %i %f %f %f", 
-					ii, 
-					CorrNextPos[ii].pos, 
-					NextPos[ii].pos, 
-					fabs( CorrNextPos[ii].pos - NextPos[ii].pos ) );
-
 				if( fabs( CorrNextPos[ii].pos - NextPos[ii].pos ) > 0.001 )
 				{
-					IDMessage(getDeviceName(), "We should be here");
 					MoveOneAxis(ID, &CorrNextPos[ii] );
 				}
 			}
@@ -496,9 +498,16 @@ void Secondary::TimerHit()
 	char name[] = "PosX";
 	for( iter=Pos; iter!=&Pos[6]; iter++ )
 	{
+		
+		if ( iter->letter[0] == 'X' || iter->letter[0] == 'Y' || iter->letter[0] == 'Z' )
+			unitconversion = MILI2MICRON;
+		else
+			unitconversion = DEG2ASEC;
+
 		name[3] = iter->letter[0];
+		
 		IAxis = getNumber( name );
-		IAxis->np->value = iter->pos;
+		IAxis->np->value = iter->pos*unitconversion;
 		IDSetNumber( IAxis, NULL );
 	}
 
@@ -592,8 +601,11 @@ void Secondary::deepcopy(Axis *copyto, Axis *copyfrom)
 int Secondary::GetTempAndEl()
 {
 
-	temp = 20.0;
-	el = 3.14159/4.0;
+	char elerr[100];
+	char temperr[100];
+	temp = GetStrutTemp(temperr);
+	el = GetAlt(elerr)*3.14159/180.0;
+	IDMessage(getDeviceName(), "the temp err is %f and the el is %f", temp, el*180/3.14159 );
 }
 
 bool Secondary::MoveNext()

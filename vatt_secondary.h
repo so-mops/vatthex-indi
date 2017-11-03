@@ -49,7 +49,7 @@ class Secondary : public INDI::DefaultDevice
 
 	void deepcopy(Axis *, Axis *);
 	
-	
+	unsigned short int vatttel_counter=0;
 	Axis Pos[6];
 	Axis NextPos[6];
 	Axis CorrPos[6];
