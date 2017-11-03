@@ -605,7 +605,7 @@ int Secondary::GetTempAndEl()
 	char temperr[100];
 	temp = GetStrutTemp(temperr);
 	el = GetAlt(elerr)*3.14159/180.0;
-	IDMessage(getDeviceName(), "the temp err is %f and the el is %f", temp, el*180/3.14159 );
+	//IDMessage(getDeviceName(), "the temp err is %f and the el is %f", temp, el*180/3.14159 );
 }
 
 bool Secondary::MoveNext()
