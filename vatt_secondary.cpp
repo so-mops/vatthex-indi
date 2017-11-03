@@ -369,17 +369,19 @@ bool Secondary::ReadHex()
 bool Secondary::fill()
 {
 	/*Translational numbers*/
-	const char linposgrp[] = "Linear Position";
-	const char rotposgrp[] = "Rotational Position";
+	const char linposgrp[] = "Decenter";
+	const char rotposgrp[] = "Tip Tilt";
 
 			
 
-	IUFillNumber(&PosLatN_X[0] , "X", "X Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
-	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
+	//X axis for corrections is Y axis of PI hexapod
+	IUFillNumber(&PosLatN_X[0] , "Y", "X Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
+	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_X );
 	
-	IUFillNumber(&PosLatN_Y[0] , "Y", "Y Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
-	IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
+	//Y axis for corrections (auto collimation) is X axis of PI Hexapod
+	IUFillNumber(&PosLatN_Y[0] , "X", "Y Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
+	IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_Y );
 
 	IUFillNumber(&PosLatN_Z[0] , "Z", "Focus ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
@@ -388,7 +390,7 @@ bool Secondary::fill()
 
 
 	/*rotational numbers*/
-	IUFillNumber(&PosRotN_W[0] , "W", "Tip X ", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
+	IUFillNumber(&PosRotN_W[0] , "W", "W Axis ", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_W,  PosRotN_W, 1, getDeviceName(), "PosW", "Rotational Position W", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_W );
 
@@ -398,7 +400,7 @@ bool Secondary::fill()
 	defineNumber( &PosRotNV_V );
 
 
-	IUFillNumber(&PosRotN_U[0] , "U", "U Axis ", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
+	IUFillNumber(&PosRotN_U[0] , "U", "Tip X", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_U,  PosRotN_U, 1, getDeviceName(), "PosU", "Rotational Position U", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_U );
 	
