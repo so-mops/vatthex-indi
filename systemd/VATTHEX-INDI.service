@@ -7,3 +7,7 @@ After = network.target
 [Service]
 Type=simple
 ExecStart=/usr/bin/indiserver /usr/local/bin/VATTHEX-INDI
+User=root
+
+[Install]
+WantedBy=default.target

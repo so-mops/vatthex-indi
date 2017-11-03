@@ -11,6 +11,7 @@ install: sdev
 	cp systemd/VATTHEX-INDI.service /etc/systemd/system
 	chmod 664 /etc/systemd/system/VATTHEX-INDI.service
 	systemctl daemon-reload
+	systemctl enable VATTHEX-INDI.service
 
 clean:
 	rm -f sdev
