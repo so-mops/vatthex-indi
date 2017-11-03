@@ -1,0 +1,9 @@
+[Unit]
+
+Description= INDI driver for VATT hexapod
+After = network.target
+
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/indiserver /usr/local/bin/VATTHEX-INDI
