@@ -331,7 +331,7 @@ int Secondary::ConnectHex( const char *host="localhost", int port=5200 )
 	
 	if(PI_qIDN(ID,szIDN,199) == FALSE)
 	{
-    	IDMessage( getDeviceName(),  "qIDN failed. Exiting." );
+    		IDMessage( getDeviceName(),  "qIDN failed. Exiting." );
 		return false;
 	}
 	else
@@ -496,7 +496,19 @@ void Secondary::TimerHit()
 
 
 	}
-		
+	
+
+	/**********************************************
+	* The below loop is how we match the INDI IAxis	
+	* type to the vatthex.so Axis type. Basically
+	* I use the last character of the name of the 
+	* IAxis (X, Y etc) to macthe the letter member
+	* of the Axis structure. To make this even 
+	* more confusing the X and Y axes are reversed.
+	*	
+	*	
+	***********************************************/
+	
 	char name[] = "PosX";
 	for( iter=Pos; iter!=&Pos[6]; iter++ )
 	{
