@@ -260,6 +260,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 	DefaultDevice::ISNewSwitch(dev, name, states, names, n);
 	ISwitchVectorProperty *mysvp;
 	mysvp = getSwitch(name);
+	Axis adjust_axis;
 
 	IUUpdateSwitch(mysvp, states, names, n);
 	if( strcmp("correct", mysvp->name) == 0 )
@@ -269,7 +270,37 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		{
 			correct( CorrNextPos, el, temp);
 			mysvp->s = IPS_OK;
+
+			//Move to the nominal zero position
+			adjust_axis.letter = (char *) "X";
+			adjust_axis.pos = -1000/MILI2MICRON;
+			IDMessage(getDeviceName(), "letter is %s", adjust_axis.letter);
+			//MoveOneAxis(ID, &adjust_axis );
+
+
+			/*
+			strcpy( adjust_axis.letter, "Y" );
+			adjust_axis.pos = -7000/MILI2MICRON;
+			MoveOneAxis(ID, &adjust_axis );
+
+
+			strcpy( adjust_axis.letter, "Z" );
+			adjust_axis.pos = -1750/MILI2MICRON;
+			MoveOneAxis(ID, &adjust_axis );
+
+
+
+
+			strcpy( adjust_axis.letter, "V" );
+			adjust_axis.pos = -40/DEG2ASEC;
+			MoveOneAxis(ID, &adjust_axis );
+
+
+			strcpy( adjust_axis.letter, "U" );
+			adjust_axis.pos = -40/DEG2ASEC;
+			MoveOneAxis(ID, &adjust_axis );*/
 		}
+
 		else
 		{
 			mysvp->s = IPS_IDLE;
