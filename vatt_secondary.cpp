@@ -95,7 +95,7 @@ bool Secondary::updateProperties()
 {	
 
 	fill();
-	SetTimer(1000);
+	TimerID = SetTimer(1000);
 	return true;
 }
 
@@ -106,7 +106,7 @@ bool Secondary::updateProperties()
 bool Secondary::Connect()
 {
 
-
+	DefaultDevice::Connect();
 	//the port number is hardcoded because the 
 	//PI C-887 only allows you to talk to it on
 	//port 50000. 
@@ -123,7 +123,9 @@ bool Secondary::Connect()
 ***************************************************************************************/
 bool Secondary::Disconnect()
 {
-		
+	DefaultDevice::Disconnect();
+	if(TimerID >= 0)
+		RemoveTimer( TimerID );
 	PI_CloseConnection(ID);
     return true;
 }
@@ -260,49 +262,48 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 	DefaultDevice::ISNewSwitch(dev, name, states, names, n);
 	ISwitchVectorProperty *mysvp;
 	mysvp = getSwitch(name);
-	Axis adjust_axis;
+
 
 	IUUpdateSwitch(mysvp, states, names, n);
 	if( strcmp("correct", mysvp->name) == 0 )
 	{
-		deepcopy(CorrNextPos, NextPos);
 		if( mysvp->sp[0].s == ISS_ON )
-		{
-			correct( CorrNextPos, el, temp);
-			mysvp->s = IPS_OK;
-
-			//Move to the nominal zero position
-			adjust_axis.letter = (char *) "X";
-			adjust_axis.pos = -1000/MILI2MICRON;
-			IDMessage(getDeviceName(), "letter is %s", adjust_axis.letter);
-			//MoveOneAxis(ID, &adjust_axis );
-
+		{	
 
 			/*
-			strcpy( adjust_axis.letter, "Y" );
-			adjust_axis.pos = -7000/MILI2MICRON;
-			MoveOneAxis(ID, &adjust_axis );
+			 * Corrections Have Been Switched
+			 * First thing we do is align the 
+			 * optics by sending each axis
+			 * to its nominal zero point.
+			 * */
+			
+			NextPos[XX].pos = -1000/MILI2MICRON;
+			MoveOneAxis(ID, &NextPos[XX] );
+					
+			NextPos[YY].pos = -700/MILI2MICRON;
+			MoveOneAxis(ID, &NextPos[YY] );
+			
+			NextPos[ZZ].pos = -1750/MILI2MICRON;
+			MoveOneAxis(ID, &NextPos[XX]);
 
+			NextPos[VV].pos = 40/DEG2ASEC;
+			MoveOneAxis(ID, &NextPos[VV]);
 
-			strcpy( adjust_axis.letter, "Z" );
-			adjust_axis.pos = -1750/MILI2MICRON;
-			MoveOneAxis(ID, &adjust_axis );
+			NextPos[UU].pos = -60/DEG2ASEC;
+			MoveOneAxis(ID, &NextPos[UU]);
 
-
-
-
-			strcpy( adjust_axis.letter, "V" );
-			adjust_axis.pos = -40/DEG2ASEC;
-			MoveOneAxis(ID, &adjust_axis );
-
-
-			strcpy( adjust_axis.letter, "U" );
-			adjust_axis.pos = -40/DEG2ASEC;
-			MoveOneAxis(ID, &adjust_axis );*/
+			//Get Temp and elevation now
+			GetTempAndEl();
+			deepcopy(CorrNextPos, NextPos);
+			correct( CorrNextPos, el, temp);
+			mysvp->s = IPS_OK;
 		}
 
 		else
 		{
+			//Corrections are off so NextPos and 
+			//Corrected next pos are the same.
+			deepcopy(CorrNextPos, NextPos);
 			mysvp->s = IPS_IDLE;
 			GetHexPos( ID, Pos );
 		}
@@ -496,18 +497,18 @@ void Secondary::TimerHit()
 	isMoving = SetMoveState();
 	isReady = SetReadyState();
 	
-	if(vatttel_counter == 5)
-	{
-		GetTempAndEl();
-		vatttel_counter = 0;
-	}
-	else
-		vatttel_counter++;
-	
+		
 	if ( corrS[0].s == ISS_ON )
 	{
+		if(vatttel_counter == 5)
+		{
+			GetTempAndEl();
+			vatttel_counter = 0;
+		}
+		else
+			vatttel_counter++;
+
 		//remove correction for display purpose.
-		uncorrect(Pos, el, temp);
 
 		//if we are not moving and the difference
 		//between the next pos and the corrected next
@@ -518,13 +519,14 @@ void Secondary::TimerHit()
 				
 			for(int ii=0; ii<6; ii++)
 			{
-				if( fabs( CorrNextPos[ii].pos - NextPos[ii].pos ) > 0.001 )
+				if( fabs( CorrNextPos[ii].pos - CorrPos[ii].pos ) > 0.0001 )
 				{
 					MoveOneAxis(ID, &CorrNextPos[ii] );
 				}
 			}
 		}
-
+		
+		uncorrect(Pos, el, temp);
 
 	}
 	
@@ -564,7 +566,7 @@ void Secondary::TimerHit()
 
 	sprintf( errT[0].text, "%i: %s",errno, err );
 	IDSetText( &errTV, NULL );
-	SetTimer( (int) 1000 );
+	TimerID = SetTimer( (int) 1000 );
 	
 }
 
@@ -648,6 +650,8 @@ int Secondary::GetTempAndEl()
 
 	char elerr[100];
 	char temperr[100];
+	//temp = 0.0;
+	//el = 90*3.14159/180.0;
 	temp = GetStrutTemp(temperr);
 	el = GetAlt(elerr)*3.14159/180.0;
 	//IDMessage(getDeviceName(), "the temp err is %f and the el is %f", temp, el*180/3.14159 );
