@@ -406,7 +406,7 @@ bool Secondary::fill()
 	/*Translational numbers*/
 	const char linposgrp[] = "Decenter";
 	const char rotposgrp[] = "Tip Tilt";
-
+	const char miscgrp[] = "Miscelaneous";
 			
 
 	//X axis for corrections is Y axis of PI hexapod
@@ -439,30 +439,32 @@ bool Secondary::fill()
 	IUFillNumberVector( &PosRotNV_U,  PosRotN_U, 1, getDeviceName(), "PosU", "Rotational Position U", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_U );
 	
+	//These numbers were used for testing purposes. I am going to leave it in for future testing.
 	IUFillNumber(&TempElN[0] , "temp", "Strut Temp", "%4.1f", -20, 20, 0.1, 0);
 	IUFillNumber(&TempElN[1] , "el", "Elevation", "%4.1f", 0, 90, 0.01, 0);
 	IUFillNumberVector( &TempElNV,  TempElN, 2, getDeviceName(), "temp", "The fing temp", "ALL", IP_RW, 0.5, IPS_IDLE );
-	defineNumber( &TempElNV );
-	IDSetNumber(&TempElNV, NULL );
+	//if you want to use them uncomment the below line. 
+	//defineNumber( &TempElNV );
+	//IDSetNumber(&TempElNV, NULL );
 
 	//Corrections
 	IUFillSwitch( &corrS[0], "correct", "Auto Collimate", ISS_OFF );
-	IUFillSwitchVector( &corrSV, corrS, 1, getDeviceName(), "correct", "correct", "ALL", IP_WO, ISR_NOFMANY, 0.5, IPS_IDLE );
+	IUFillSwitchVector( &corrSV, corrS, 1, getDeviceName(), "correct", "correct", miscgrp, IP_WO, ISR_NOFMANY, 0.5, IPS_IDLE );
 	defineSwitch(&corrSV);
 
 	//Reference the struts
 	IUFillSwitch( &refS[0], "ref", "Reference", ISS_OFF );
-	IUFillSwitchVector( &refSV, refS, 1, getDeviceName(), "ref", "Reference", "ALL", IP_WO, ISR_NOFMANY, 0.5, IPS_IDLE );
+	IUFillSwitchVector( &refSV, refS, 1, getDeviceName(), "ref", "Reference", miscgrp, IP_WO, ISR_NOFMANY, 0.5, IPS_IDLE );
 	defineSwitch(&refSV);
 
 
 	IUFillText( cmdT, "cmd", "Command", "" );
-	IUFillTextVector( &cmdTV, cmdT, 1, getDeviceName(), "cmdv", "Command", "ALL", IP_RW, 0.5, IPS_IDLE );
+	IUFillTextVector( &cmdTV, cmdT, 1, getDeviceName(), "cmdv", "Command", miscgrp, IP_RW, 0.5, IPS_IDLE );
 	defineText( &cmdTV );
 
 
 	IUFillText( errT, "err", "Error", "No Error" );
-	IUFillTextVector( &errTV, errT, 1, getDeviceName(), "err", "Error", "ALL", IP_RO, 0.5, IPS_IDLE );
+	IUFillTextVector( &errTV, errT, 1, getDeviceName(), "err", "Error", miscgrp, IP_RO, 0.5, IPS_IDLE );
 	defineText( &errTV );
 
 
