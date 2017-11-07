@@ -82,10 +82,11 @@ bool Secondary::initProperties()
 {
 	DefaultDevice::initProperties();
 
+	fill();
 	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "10.0.3.10" );
 	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RW, 0.5, IPS_IDLE );
 	defineText(&HexAddrTV);
-	IDSetText(&HexAddrTV, "should show the IP");
+	IDSetText(&HexAddrTV, NULL);
 
 	return true;
 }
@@ -94,7 +95,6 @@ bool Secondary::initProperties()
 bool Secondary::updateProperties()
 {	
 
-	fill();
 	TimerID = SetTimer(1000);
 	return true;
 }
@@ -233,16 +233,19 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 				
 				MoveOneAxis( ID, &NextPos[UU] );
 	}
-	
 
+	if( strcmp(name, "temp") == 0 )
+	{
+			
+	}
+	/*
 	
 	for(int ii=0; ii<n; ii++)
 	{
-		
-		//IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
-		
-			}
+		IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
+	}*/
 	IUUpdateNumber(myv, values, names, n);
+	IDSetNumber(&TempElNV, "We should be updating temp.");
 	return true;
 
 }
@@ -436,6 +439,11 @@ bool Secondary::fill()
 	IUFillNumberVector( &PosRotNV_U,  PosRotN_U, 1, getDeviceName(), "PosU", "Rotational Position U", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_U );
 	
+	IUFillNumber(&TempElN[0] , "temp", "Strut Temp", "%4.1f", -20, 20, 0.1, 0);
+	IUFillNumber(&TempElN[1] , "el", "Elevation", "%4.1f", 0, 90, 0.01, 0);
+	IUFillNumberVector( &TempElNV,  TempElN, 2, getDeviceName(), "temp", "The fing temp", "ALL", IP_RW, 0.5, IPS_IDLE );
+	defineNumber( &TempElNV );
+	IDSetNumber(&TempElNV, NULL );
 
 	//Corrections
 	IUFillSwitch( &corrS[0], "correct", "Auto Collimate", ISS_OFF );
@@ -466,13 +474,10 @@ bool Secondary::fill()
 * Secondary::TimerHit
 * Descritpion:
 *	Idle time updates
-*
-*
-*
-*
-*
-*
-*
+*	This Includes updating 
+*	the values for the 
+*	client and doing the 
+*	autocollimation routine.
 *
 ********************************/
 void Secondary::TimerHit()
@@ -500,7 +505,7 @@ void Secondary::TimerHit()
 		
 	if ( corrS[0].s == ISS_ON )
 	{
-		if(vatttel_counter == 5)
+		if(vatttel_counter == 1)
 		{
 			GetTempAndEl();
 			vatttel_counter = 0;
@@ -508,17 +513,18 @@ void Secondary::TimerHit()
 		else
 			vatttel_counter++;
 
-		//remove correction for display purpose.
-
+		//******Active Auto Collimation stuff********
 		//if we are not moving and the difference
 		//between the next pos and the corrected next
 		//pos is high enough (because el or temp changed) 
 		//update the position
 		if(!isMoving)
 		{
-				
+			deepcopy(CorrNextPos, NextPos);
+			correct(CorrNextPos, el, temp);
 			for(int ii=0; ii<6; ii++)
 			{
+				
 				if( fabs( CorrNextPos[ii].pos - CorrPos[ii].pos ) > 0.0001 )
 				{
 					MoveOneAxis(ID, &CorrNextPos[ii] );
@@ -526,6 +532,8 @@ void Secondary::TimerHit()
 			}
 		}
 		
+
+		//remove correction for display purpose.
 		uncorrect(Pos, el, temp);
 
 	}
@@ -566,12 +574,10 @@ void Secondary::TimerHit()
 
 	sprintf( errT[0].text, "%i: %s",errno, err );
 	IDSetText( &errTV, NULL );
+
 	TimerID = SetTimer( (int) 1000 );
 	
 }
-
-
-
 
 bool Secondary::SetReadyState()
 {
@@ -654,6 +660,8 @@ int Secondary::GetTempAndEl()
 	//el = 90*3.14159/180.0;
 	temp = GetStrutTemp(temperr);
 	el = GetAlt(elerr)*3.14159/180.0;
+	//temp = TempElN[0].value;
+	//el = TempElN[1].value*3.14159/180.0;
 	//IDMessage(getDeviceName(), "the temp err is %f and the el is %f", temp, el*180/3.14159 );
 }
 

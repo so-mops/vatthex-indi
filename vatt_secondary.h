@@ -91,6 +91,11 @@ class Secondary : public INDI::DefaultDevice
 
 	ITextVectorProperty errTV;
 	IText errT[1];
+
+	INumberVectorProperty TempElNV;
+	INumber TempElN[2];
+	
+	
 	
 	double temp = 20.0;
 	double el = 3.14159/4.0;
