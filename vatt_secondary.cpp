@@ -11,6 +11,7 @@
 #define PI_PORTNUM 50000
 #define MILI2MICRON 1e3
 #define DEG2ASEC 3600.0
+#define MAX_COMMERR 0
 
 std::unique_ptr<Secondary> secondary(new Secondary());
 
@@ -109,11 +110,25 @@ bool Secondary::Connect()
 	DefaultDevice::Connect();
 	//the port number is hardcoded because the 
 	//PI C-887 only allows you to talk to it on
-	//port 50000. 
-	if(!ConnectHex(HexAddrT[0].text, PI_PORTNUM))
+	//port 50000.
+
+	
+	if (!controllerIsAlive())
+	{//Cant find controller on network let user know
 		return false;
-	GetHexPos(ID, Pos);
-	GetHexPos(ID, NextPos);
+	}
+	if( !ConnectHex( HexAddrT[0].text, PI_PORTNUM ) )
+	{//Cant connect let user know;
+		
+		return false;
+	}
+	_GetHexPos( Pos);
+	_GetHexPos( NextPos);
+	if(!isReferenced(Pos))
+	{
+		refSV.s == IPS_ALERT;
+		IDSetSwitch(&refSV, "You need to reference the secondary");
+	}
 
     return true;
 }
@@ -124,9 +139,19 @@ bool Secondary::Connect()
 bool Secondary::Disconnect()
 {
 	DefaultDevice::Disconnect();
-	if(TimerID >= 0)
-		RemoveTimer( TimerID );
+
 	PI_CloseConnection(ID);
+	ID=-1;
+
+	//Let gui know correciton is off
+	corrS[0].s = ISS_OFF;
+	IDSetSwitch(&corrSV, NULL);
+
+	//Let Gui know reference maybe wrong
+	refS[0].s = ISS_OFF;
+	refSV.s = IPS_IDLE;
+	IDSetSwitch(&refSV, NULL);
+
     return true;
 }
 
@@ -151,10 +176,10 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		
 		if( corrS[0].s == ISS_ON )
 				
-				MoveOneAxis( ID, &CorrNextPos[XX] );
+				_MoveOneAxis(  &CorrNextPos[XX] );
 		else
 				
-				MoveOneAxis( ID, &NextPos[XX] );
+				_MoveOneAxis( &NextPos[XX] );
 				
 
 		
@@ -168,10 +193,10 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		
 		if( corrS[0].s == ISS_ON )
 				
-				MoveOneAxis( ID, &CorrNextPos[YY] );
+				_MoveOneAxis( &CorrNextPos[YY] );
 		else
 				
-				MoveOneAxis( ID, &NextPos[YY] );
+				_MoveOneAxis( &NextPos[YY] );
 	
 		
 	}
@@ -183,10 +208,10 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		
 		if( corrS[0].s == ISS_ON )
 				
-				MoveOneAxis( ID, &CorrNextPos[ZZ] );
+				_MoveOneAxis( &CorrNextPos[ZZ] );
 		else
 				
-				MoveOneAxis( ID, &NextPos[ZZ] );
+				_MoveOneAxis( &NextPos[ZZ] );
 	
 	
 	}
@@ -198,10 +223,10 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		
 		if( corrS[0].s == ISS_ON )
 				
-				MoveOneAxis( ID, &CorrNextPos[WW] );
+				_MoveOneAxis( &CorrNextPos[WW] );
 		else
 				
-				MoveOneAxis( ID, &NextPos[WW] );
+				_MoveOneAxis( &NextPos[WW] );
 
 		
 	}
@@ -213,10 +238,10 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		
 		if( corrS[0].s == ISS_ON )
 				
-				MoveOneAxis( ID, &CorrNextPos[VV] );
+				_MoveOneAxis(  &CorrNextPos[VV] );
 		else
 				
-				MoveOneAxis( ID, &NextPos[VV] );
+				_MoveOneAxis(  &NextPos[VV] );
 
 	
 	}
@@ -228,10 +253,10 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		
 		if( corrS[0].s == ISS_ON )
 				
-				MoveOneAxis( ID, &CorrNextPos[UU] );
+				_MoveOneAxis(  &CorrNextPos[UU] );
 		else
 				
-				MoveOneAxis( ID, &NextPos[UU] );
+				_MoveOneAxis(  &NextPos[UU] );
 	}
 
 	if( strcmp(name, "temp") == 0 )
@@ -281,19 +306,19 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			 * */
 			
 			NextPos[XX].pos = -1000/MILI2MICRON;
-			MoveOneAxis(ID, &NextPos[XX] );
+			_MoveOneAxis( &NextPos[XX] );
 					
 			NextPos[YY].pos = -700/MILI2MICRON;
-			MoveOneAxis(ID, &NextPos[YY] );
+			_MoveOneAxis( &NextPos[YY] );
 			
 			NextPos[ZZ].pos = -1750/MILI2MICRON;
-			MoveOneAxis(ID, &NextPos[XX]);
+			_MoveOneAxis( &NextPos[XX]);
 
 			NextPos[VV].pos = 40/DEG2ASEC;
-			MoveOneAxis(ID, &NextPos[VV]);
+			_MoveOneAxis( &NextPos[VV]);
 
 			NextPos[UU].pos = -60/DEG2ASEC;
-			MoveOneAxis(ID, &NextPos[UU]);
+			_MoveOneAxis( &NextPos[UU]);
 
 			//Get Temp and elevation now
 			GetTempAndEl();
@@ -308,7 +333,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			//Corrected next pos are the same.
 			deepcopy(CorrNextPos, NextPos);
 			mysvp->s = IPS_IDLE;
-			GetHexPos( ID, Pos );
+			_GetHexPos(  Pos );
 		}
 		IDSetSwitch( &corrSV, NULL);
 	}
@@ -378,15 +403,156 @@ int Secondary::ConnectHex( const char *host="localhost", int port=5200 )
 	}
 }
 
-bool Secondary::ReadHex()
+bool Secondary::controllerIsAlive()
 {
+	char devs[500];
+	PI_EnumerateTCPIPDevices( devs, 500, "" );
+	std::string sdevs = std::string(devs);
+	if( sdevs.find(serial_number) == std::string::npos )
+	{
+
+		IDMessage(getDeviceName(), "Could not find device %s (secondary controller) on the network", serial_number );
+		IDMessage(getDeviceName(), "Check network cables, power then try a restart.");
+		return false;
+	}
+	else
+	{
+		IDMessage( getDeviceName(), "Secondary Controller found will attempt to connect.");
+		return true;
+	}
+}
+
+/*******************************************************************
+* _MoveOneAxis
+* arg: ax=> pointer to single Axis of hexapod
+* returns true on success and false on failure
+* Description:
+*	A simple wrapper for the MoveOneAxis in the libvatthex.so
+*
+*
+* Scott Swindell 2017/11/29
+*
+*******************************************************************/
+
+bool Secondary::_MoveOneAxis( Axis *ax )
+{
+	int retn = true;
+	if(ID<0)
+	{
+		IDMessage(getDeviceName(), "Secondary controller not connected!");
+		return false;
+	}
+	if(!MoveOneAxis(ID, ax))
+	{
+		IDMessage(getDeviceName(), "Axis %s failed to move to %f", ax->letter, ax->pos);
+		isConnected();
+		commerr_count++;
+		retn=false;
+	}
+	else 
+		commerr_count=0;
+
+	return retn;
+
+}
+
+/*******************************************************************
+* _GetHexPos
+* arg: hexpos=> pointer to array of hex axes to populate
+* returns true on success and false on failure
+* Description:
+*	A simple wrapper for the GetHexPos in the libvatthex.so
+*
+* Scott Swindell 2017/11/29
+*
+*******************************************************************/
+bool Secondary::_GetHexPos(Axis *hexpos)
+{
+	int retn = true;
 	if(ID<0)
 	{
 		IDMessage(getDeviceName(), "Hexapod not connected!");
 		return false;
 	}
-	GetHexPos(ID, Pos);
+	if( !GetHexPos( ID, hexpos) )
+	{
+		retn = false;
+		IDMessage( getDeviceName(), "Failed to retrieve position" );
+		isConnected();
+		commerr_count++;
+	}
+	else
+		commerr_count=0;
+	return retn;
 
+}
+
+/*************************************************
+* isConnected
+* returns: boolean weather or not the hex 
+*	controller is connected
+*
+* Description:
+*	If the controller is not connected
+* we set various INDI switches and states to 
+* reflect this unfortunate occurance.
+* 
+* At first I tried the PI_IsConnected to test
+* for the connection. This function seems to
+* only tell you if the PI was connected. You 
+* unplug the network cable and this lovely function
+* will still return true!!
+*
+*
+* Scott Swindell 2017/11/29
+*
+*************************************************/
+bool Secondary::isConnected()
+{	
+	int isConned = true;
+	
+	if (!controllerIsAlive())
+	{
+		PI_CloseConnection(ID);
+		ID=-1;
+		
+		//Let gui know correciton is off
+		corrS[0].s = ISS_OFF;
+		IDSetSwitch(&corrSV, NULL);
+
+		//Let Gui know reference maybe wrong
+		refS[0].s = ISS_OFF;
+		IDSetSwitch(&refSV, NULL);
+		
+		setConnected(false, IPS_ALERT, "Could not communicate with the Secondary Controller, you may have to restart it.");
+		connectionWentBad=true;
+		
+		isConned=0;
+
+	}
+	return isConned;
+}
+
+bool Secondary::isReferenced(Axis xp[])
+{
+	int isRefed;
+	if(ID<0)
+	{
+		IDMessage(getDeviceName(), "You are not connected!");
+		return false;
+	}
+	for(int ii=0; ii<6; ii++)
+	{
+		if(!PI_qFRF(ID, xp[ii].letter, &isRefed))
+		{
+			commerr_count++;
+			return false;
+		}
+		if(!isRefed)
+			return false;
+		
+	}
+	return true;
 }
 
 /**************************************************
@@ -485,11 +651,22 @@ bool Secondary::fill()
 void Secondary::TimerHit()
 {
 	if( ID < 0 )
+	{
+		//if we get here, it is likely that the hexapod lost connection
+		//to the network or lost power while we were connected. 
+		if( connectionWentBad && controllerIsAlive() )
+		{
+			//Let the user know we can connect again.
+			setConnected(false, IPS_BUSY, "Controller is back up try connecting.");
+			connectionWentBad = false;
+		}
+		
+		TimerID = SetTimer( (int) 2000 );
 		return;
+	}
 
 		
 	Axis *iter;
-	Axis ActualPos[6]; //The real position of the hexapod without corrections
 	INumberVectorProperty *IAxis;
 	bool isMoving;
 	int isReady = 0;
@@ -498,15 +675,27 @@ void Secondary::TimerHit()
 	double unitconversion;
 	
 
-	GetHexPos( ID, Pos );
+	_GetHexPos(  Pos );
 	deepcopy(CorrPos, Pos);
 
 	isMoving = SetMoveState();
 	isReady = SetReadyState();
+	if (isReady)
+	{
+		refSV.s = IPS_OK;
+		refS[0].s = ISS_OFF;
+	}
+	else
+	{
+		IDMessage(getDeviceName(), "The hexapod is not ready, it may need to be restarted");
+		refSV.s = IPS_ALERT;
+	}
+	IDSetSwitch(&refSV, NULL);
 	
 		
 	if ( corrS[0].s == ISS_ON )
 	{
+		corrSV.s = IPS_OK;
 		if(vatttel_counter == 1)
 		{
 			GetTempAndEl();
@@ -526,10 +715,10 @@ void Secondary::TimerHit()
 			correct(CorrNextPos, el, temp);
 			for(int ii=0; ii<6; ii++)
 			{
-				
+				//we have veered too far from the correct position... lets move
 				if( fabs( CorrNextPos[ii].pos - CorrPos[ii].pos ) > 0.0001 )
 				{
-					MoveOneAxis(ID, &CorrNextPos[ii] );
+					_MoveOneAxis( &CorrNextPos[ii] );
 				}
 			}
 		}
@@ -539,7 +728,11 @@ void Secondary::TimerHit()
 		uncorrect(Pos, el, temp);
 
 	}
-	
+	else
+	{
+		corrSV.s = IPS_IDLE;
+	}
+	IDSetSwitch(&corrSV, NULL);
 
 	/**********************************************
 	* The below loop is how we match the INDI IAxis	
@@ -574,10 +767,49 @@ void Secondary::TimerHit()
 	else
 		errTV.s = IPS_IDLE;
 
+
 	sprintf( errT[0].text, "%i: %s",errno, err );
 	IDSetText( &errTV, NULL );
 
+	/**********************************************************************
+	* It seems likely that the controllerIsAlive
+	* method could return true even when the GCS connection
+	* is dead. PI uses a TCP port 50000 for GCS commands
+	* but the isControllerAlive uses PI_EnumerateTCPIPDevices
+	* to see if we can find the secondary controller/hexapod
+	* on the network. I would guess that PI_EnumerateTCPIPDevices
+	* uses some sort of multicast packet to see if the hexapod
+	* is on the network. All this to say that the GCS connection
+	* could have gone bad while, the broadcast packet happily
+	* gets a "I am here" response. If this is the case
+	* we use the number of times we missed a GCS response
+	* to let the user know that we are no longer communicating
+	* with the hexapod. This logic is done in the folowing if
+	* statement.
+	* TLDR; desperate last measure to see if we are not connected to the Hexapod.
+	**********************************************************************/
+
+	if(commerr_count > MAX_COMMERR)
+	{
+		PI_CloseConnection(ID);
+		ID=-1;
+		
+		//Let gui know correciton is off
+		corrS[0].s = ISS_OFF;
+		IDSetSwitch(&corrSV, NULL);
+
+		//Let Gui know reference maybe wrong
+		refS[0].s = ISS_OFF;
+		IDSetSwitch(&refSV, NULL);
+		
+		setConnected(false, IPS_ALERT, "Could not communicate with the Secondary Controller. Too many comm errors, you may have to restart it.");
+		connectionWentBad=true;
+	
+	}
+	//End desperate attempt.
+
 	TimerID = SetTimer( (int) 1000 );
+	
 	
 }
 
@@ -652,6 +884,18 @@ void Secondary::deepcopy(Axis *copyto, Axis *copyfrom)
 
 		}
 }
+
+
+/**********************************************
+* GetTempAndEl
+*	Retrieves the temperature and elevation
+*	from vatttel.
+*
+*
+*
+* Scott Swindell 2017/10/2017
+*
+**********************************************/
 
 int Secondary::GetTempAndEl()
 {

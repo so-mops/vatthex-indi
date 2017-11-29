@@ -37,13 +37,18 @@ class Secondary : public INDI::DefaultDevice
 	
 	virtual bool ISNewText(const char *dev, const char *name, char *texts[], char *names[], int n);
 
-	bool ReadHex();
+	virtual void TimerHit();
+	bool _GetHexPos(Axis ax[]);
+	bool _MoveOneAxis(Axis *ax);
 	bool MoveNext();
 	int ConnectHex(const char *host, int port);
 	bool fill();
 	int ID;
 	bool setNumber(INumberVectorProperty *, double values, char * names[], int);
-	virtual void TimerHit();
+	bool isReferenced(Axis xp[]);
+	bool controllerIsAlive();
+	bool isConnected();
+	bool connectionWentBad=false;
 
 	int GetTempAndEl( );
 
@@ -101,6 +106,10 @@ class Secondary : public INDI::DefaultDevice
 	double el = 3.14159/4.0;
 
 	int TimerID = -1;
+	unsigned short commerr_count=0;
+
+	//should probably read this in from a config file
+	const char *serial_number = "SN 117021835";
 
 
   protected:

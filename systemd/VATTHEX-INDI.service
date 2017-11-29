@@ -6,7 +6,7 @@ After = network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/indiserver /usr/local/bin/VATTHEX-INDI
+ExecStart=/usr/bin/indiserver -vv -l /home/scott/.indilogs/ /usr/local/bin/VATTHEX-INDI
 User=root
 
 [Install]
