@@ -69,6 +69,8 @@ void ISSnoopDevice(XMLEle *root)
 
 Secondary::Secondary()
 {
+	//negative ID means we haven't connected or 
+	//the connection was broken. 
 	ID=-1;
 	IDLog("construct\n");
 }
@@ -147,7 +149,7 @@ bool Secondary::Disconnect()
 	corrS[0].s = ISS_OFF;
 	IDSetSwitch(&corrSV, NULL);
 
-	//Let Gui know reference maybe wrong
+	//Let Gui know reference may be wrong
 	refS[0].s = ISS_OFF;
 	refSV.s = IPS_IDLE;
 	IDSetSwitch(&refSV, NULL);
@@ -771,6 +773,7 @@ void Secondary::TimerHit()
 	sprintf( errT[0].text, "%i: %s",errno, err );
 	IDSetText( &errTV, NULL );
 
+
 	/**********************************************************************
 	* It seems likely that the controllerIsAlive
 	* method could return true even when the GCS connection
@@ -812,6 +815,22 @@ void Secondary::TimerHit()
 	
 	
 }
+
+
+/********************************************
+* SetReadyState
+* returns: boolean if hexapod is ready
+*
+* Description:
+*
+* Checks to see if the controller is ready 
+* to move if not alerts the user with the
+* INDI state propert. 
+*
+*
+*
+*
+********************************************/
 
 bool Secondary::SetReadyState()
 {
