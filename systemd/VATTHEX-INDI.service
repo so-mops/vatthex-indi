@@ -1,12 +1,14 @@
 [Unit]
 
 Description= INDI driver for VATT hexapod
-After = network.target
+After=network.target
+Before=webclient-indi.service
+Requires=webclient-indi.service
 
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/indiserver -vv -l /home/scott/.indilogs/ /usr/local/bin/VATTHEX-INDI
+ExecStart=/usr/local/bin/startindi
 User=root
 
 [Install]

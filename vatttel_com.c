@@ -14,6 +14,7 @@
 
 #include "vatttel_com.h"
 
+
 /*
  * Read the index {0-63} of of the vatt pkt as
  * an integer. This can later be converted 

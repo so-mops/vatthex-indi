@@ -8,6 +8,17 @@
 #include <memory>
 #include <cmath>
 #include "vatttel_com.h"
+#include "ngclient.h"
+#include <unistd.h>
+
+
+#define REFRESH  1000 //refresh time in milliseconds
+
+
+//When to refresh Temerature from vatttel as a multiple of REFRESH time. 
+#define MAX_VATTTEL_CNT 120 
+#define SLEEP_BTWN_CALLS 1e4 //10 ms
+
 #define PI_PORTNUM 50000
 #define MILI2MICRON 1e3
 #define DEG2ASEC 3600.0
@@ -66,13 +77,12 @@ void ISSnoopDevice(XMLEle *root)
 }
 
 
-
+//Constructor
 Secondary::Secondary()
 {
 	//negative ID means we haven't connected or 
 	//the connection was broken. 
 	ID=-1;
-	IDLog("construct\n");
 }
 
 Secondary::~Secondary()
@@ -81,15 +91,17 @@ Secondary::~Secondary()
 
 	IDLog("construct\n");
 }
+
+
+
 bool Secondary::initProperties()
 {
 	DefaultDevice::initProperties();
 
 	fill();
-	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "10.0.3.10" );
-	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RW, 0.5, IPS_IDLE );
-	defineText(&HexAddrTV);
-	IDSetText(&HexAddrTV, NULL);
+	
+	//excede the vatttel_counter so we can 
+	//update temperature immediately
 
 	return true;
 }
@@ -98,6 +110,10 @@ bool Secondary::initProperties()
 bool Secondary::updateProperties()
 {	
 
+	if(TimerID != -1)
+	{
+		RemoveTimer(TimerID);
+	}
 	TimerID = SetTimer(1000);
 	return true;
 }
@@ -128,7 +144,7 @@ bool Secondary::Connect()
 	_GetHexPos( NextPos);
 	if(!isReferenced(Pos))
 	{
-		refSV.s == IPS_ALERT;
+		refSV.s = IPS_ALERT;
 		IDSetSwitch(&refSV, "You need to reference the secondary");
 	}
 
@@ -147,12 +163,14 @@ bool Secondary::Disconnect()
 
 	//Let gui know correciton is off
 	corrS[0].s = ISS_OFF;
+	corrSV.s = IPS_IDLE;
 	IDSetSwitch(&corrSV, NULL);
 
 	//Let Gui know reference may be wrong
 	refS[0].s = ISS_OFF;
 	refSV.s = IPS_IDLE;
 	IDSetSwitch(&refSV, NULL);
+	
 
     return true;
 }
@@ -237,7 +255,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		NextPos[VV].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
-		
+
 		if( corrS[0].s == ISS_ON )
 				
 				_MoveOneAxis(  &CorrNextPos[VV] );
@@ -263,16 +281,17 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 
 	if( strcmp(name, "temp") == 0 )
 	{
-			
+		TempElN[0].value=values[0];
+		TempElN[1].value=values[1];
+		IDSetNumber(&TempElNV, "Setting Temp or El from user %f %f", values[0], values[1]);
 	}
-	/*
+	
 	
 	for(int ii=0; ii<n; ii++)
 	{
-		IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
-	}*/
+		//IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
+	}
 	IUUpdateNumber(myv, values, names, n);
-	IDSetNumber(&TempElNV, "We should be updating temp.");
 	return true;
 
 }
@@ -297,9 +316,19 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 	IUUpdateSwitch(mysvp, states, names, n);
 	if( strcmp("correct", mysvp->name) == 0 )
 	{
-		if( mysvp->sp[0].s == ISS_ON )
+		if (ID < 0)
+		{
+			mysvp->sp[0].s = ISS_OFF;
+			IDSetSwitch( mysvp, "Hexapod is not connected please connect." );
+
+			setConnected(false, IPS_BUSY, "");
+			
+		}
+		else if( mysvp->sp[0].s == ISS_ON )
 		{	
 
+
+			
 			/*
 			 * Corrections Have Been Switched
 			 * First thing we do is align the 
@@ -309,15 +338,23 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			
 			NextPos[XX].pos = -1000/MILI2MICRON;
 			_MoveOneAxis( &NextPos[XX] );
-					
+		
+			usleep(SLEEP_BTWN_CALLS);
+
 			NextPos[YY].pos = -700/MILI2MICRON;
 			_MoveOneAxis( &NextPos[YY] );
 			
+			usleep(SLEEP_BTWN_CALLS);
+
 			NextPos[ZZ].pos = -1750/MILI2MICRON;
 			_MoveOneAxis( &NextPos[XX]);
 
+			usleep(SLEEP_BTWN_CALLS);
+
 			NextPos[VV].pos = 40/DEG2ASEC;
 			_MoveOneAxis( &NextPos[VV]);
+
+			usleep(SLEEP_BTWN_CALLS);
 
 			NextPos[UU].pos = -60/DEG2ASEC;
 			_MoveOneAxis( &NextPos[UU]);
@@ -327,6 +364,10 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			deepcopy(CorrNextPos, NextPos);
 			correct( CorrNextPos, el, temp);
 			mysvp->s = IPS_OK;
+			
+			// we just turned on autocollimate lets update
+			// temp
+			vatttel_counter = MAX_VATTTEL_CNT + 1;
 		}
 
 		else
@@ -370,6 +411,9 @@ bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char
 	}
 }
 
+
+
+
 /************************************************
  * ConnectHex
  * Args
@@ -380,6 +424,7 @@ bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char
  *
  *
  * **********************************************/
+
 int Secondary::ConnectHex( const char *host="localhost", int port=5200 ) 
 {
 	char szIDN[200];
@@ -436,17 +481,19 @@ bool Secondary::controllerIsAlive()
 *
 *******************************************************************/
 
+
+
 bool Secondary::_MoveOneAxis( Axis *ax )
 {
 	int retn = true;
 	if(ID<0)
 	{
-		IDMessage(getDeviceName(), "Secondary controller not connected!");
+		IDMessage( getDeviceName(), "Secondary controller not connected!" );
 		return false;
 	}
 	if(!MoveOneAxis(ID, ax))
 	{
-		IDMessage(getDeviceName(), "Axis %s failed to move to %f", ax->letter, ax->pos);
+		IDMessage( getDeviceName(), "Axis %s failed to move to %f", ax->letter, ax->pos );
 		isConnected();
 		commerr_count++;
 		retn=false;
@@ -455,8 +502,9 @@ bool Secondary::_MoveOneAxis( Axis *ax )
 		commerr_count=0;
 
 	return retn;
-
 }
+
+
 
 /*******************************************************************
 * _GetHexPos
@@ -468,6 +516,7 @@ bool Secondary::_MoveOneAxis( Axis *ax )
 * Scott Swindell 2017/11/29
 *
 *******************************************************************/
+
 bool Secondary::_GetHexPos(Axis *hexpos)
 {
 	int retn = true;
@@ -509,6 +558,7 @@ bool Secondary::_GetHexPos(Axis *hexpos)
 * Scott Swindell 2017/11/29
 *
 *************************************************/
+
 bool Secondary::isConnected()
 {	
 	int isConned = true;
@@ -569,12 +619,14 @@ bool Secondary::isReferenced(Axis xp[])
  *
  * ***********************************************/
 
+
 bool Secondary::fill()
 {
 	/*Translational numbers*/
 	const char linposgrp[] = "Decenter";
 	const char rotposgrp[] = "Tip Tilt";
-	const char miscgrp[] = "Miscelaneous";
+	const char miscgrp[] = "Miscellaneous";
+	const char tegroup[] = "Temp El";
 			
 
 	//X axis for corrections is Y axis of PI hexapod
@@ -598,22 +650,22 @@ bool Secondary::fill()
 	defineNumber( &PosRotNV_W );
 
 
-	IUFillNumber(&PosRotN_V[0] , "V", "Tip Y", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
+	IUFillNumber(&PosRotN_V[0] , "V", "Tip X", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_V,  PosRotN_V, 1, getDeviceName(), "PosV", "Rotational Position V", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_V );
 
 
-	IUFillNumber(&PosRotN_U[0] , "U", "Tip X", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
+	IUFillNumber(&PosRotN_U[0] , "U", "Tip Y", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_U,  PosRotN_U, 1, getDeviceName(), "PosU", "Rotational Position U", rotposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosRotNV_U );
 	
 	//These numbers were used for testing purposes. I am going to leave it in for future testing.
 	IUFillNumber(&TempElN[0] , "temp", "Strut Temp", "%4.1f", -20, 20, 0.1, 0);
 	IUFillNumber(&TempElN[1] , "el", "Elevation", "%4.1f", 0, 90, 0.01, 0);
-	IUFillNumberVector( &TempElNV,  TempElN, 2, getDeviceName(), "temp", "The fing temp", "ALL", IP_RW, 0.5, IPS_IDLE );
+	IUFillNumberVector( &TempElNV,  TempElN, 2, getDeviceName(), "temp", "The fing temp", tegroup, IP_RW, 0.5, IPS_IDLE );
 	//if you want to use them uncomment the below line. 
-	//defineNumber( &TempElNV );
-	//IDSetNumber(&TempElNV, NULL );
+	defineNumber( &TempElNV );
+	IDSetNumber(&TempElNV, NULL );
 
 	//Corrections
 	IUFillSwitch( &corrS[0], "correct", "Auto Collimate", ISS_OFF );
@@ -635,6 +687,10 @@ bool Secondary::fill()
 	IUFillTextVector( &errTV, errT, 1, getDeviceName(), "err", "Error", miscgrp, IP_RO, 0.5, IPS_IDLE );
 	defineText( &errTV );
 
+	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "10.0.3.10" );
+	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RW, 0.5, IPS_IDLE );
+	defineText(&HexAddrTV);
+	IDSetText(&HexAddrTV, NULL);
 
 }
 
@@ -666,7 +722,9 @@ void Secondary::TimerHit()
 		TimerID = SetTimer( (int) 2000 );
 		return;
 	}
-
+	
+	//We are connected so let the gui know.
+	setConnected(true, IPS_OK, NULL);
 		
 	Axis *iter;
 	INumberVectorProperty *IAxis;
@@ -678,7 +736,7 @@ void Secondary::TimerHit()
 	
 
 	_GetHexPos(  Pos );
-	deepcopy(CorrPos, Pos);
+	deepcopy( CorrPos, Pos );
 
 	isMoving = SetMoveState();
 	isReady = SetReadyState();
@@ -698,13 +756,8 @@ void Secondary::TimerHit()
 	if ( corrS[0].s == ISS_ON )
 	{
 		corrSV.s = IPS_OK;
-		if(vatttel_counter == 1)
-		{
-			GetTempAndEl();
-			vatttel_counter = 0;
-		}
-		else
-			vatttel_counter++;
+		GetTempAndEl();
+
 
 		//******Active Auto Collimation stuff********
 		//if we are not moving and the difference
@@ -717,17 +770,22 @@ void Secondary::TimerHit()
 			correct(CorrNextPos, el, temp);
 			for(int ii=0; ii<6; ii++)
 			{
+			
 				//we have veered too far from the correct position... lets move
 				if( fabs( CorrNextPos[ii].pos - CorrPos[ii].pos ) > 0.0001 )
 				{
 					_MoveOneAxis( &CorrNextPos[ii] );
+
+					usleep(SLEEP_BTWN_CALLS);
+
 				}
+			
 			}
 		}
 		
 
 		//remove correction for display purpose.
-		uncorrect(Pos, el, temp);
+		uncorrect( Pos, el, temp );
 
 	}
 	else
@@ -736,7 +794,8 @@ void Secondary::TimerHit()
 	}
 	IDSetSwitch(&corrSV, NULL);
 
-	/**********************************************
+	/*
+	*
 	* The below loop is how we match the INDI IAxis	
 	* type to the vatthex.so Axis type. Basically
 	* I use the last character of the name of the 
@@ -744,8 +803,7 @@ void Secondary::TimerHit()
 	* of the Axis structure. To make this even 
 	* more confusing the X and Y axes are reversed.
 	*	
-	*	
-	***********************************************/
+	*/
 	
 	char name[] = "PosX";
 	for( iter=Pos; iter!=&Pos[6]; iter++ )
@@ -919,16 +977,87 @@ void Secondary::deepcopy(Axis *copyto, Axis *copyfrom)
 int Secondary::GetTempAndEl()
 {
 
+
+	char rqbuff[200];
+	ng_request("ALL ", rqbuff );
+	bool gettingTemp = false;
+	
+	std::string rqstr = rqbuff;
 	char elerr[100];
 	char temperr[100];
-	//temp = 0.0;
-	//el = 90*3.14159/180.0;
-	temp = GetStrutTemp(temperr);
-	el = GetAlt(elerr)*3.14159/180.0;
-	//temp = TempElN[0].value;
+
+	double dummy_temp;
+	double dummy_el;
+	bool badread = true;
+
+	
+	size_t str_begin = rqstr.find( " ", 40 );
+	dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) )*3.14159/180.0;
+
+	//only grab the temp every 120 seconds
+	vatttel_counter++;
+	if( vatttel_counter > MAX_VATTTEL_CNT )
+	{
+		vatttel_counter=0;
+		gettingTemp=true;
+		dummy_temp = GetStrutTemp( temperr );
+		IDMessage( getDeviceName(), "I just grabbed temp");
+	}
+	else
+	{
+		dummy_temp = TempElN[0].value;
+	}
+	
+
+	//if the read temp is reasonable
+	if( dummy_temp > -17.0 && dummy_temp < 17.0 )
+	{
+		if (gettingTemp)
+		{
+			temp = dummy_temp;
+			badread = false;
+
+			// it was a good read 
+			// so let the user know
+			// by updating temp
+			TempElN[0].value = temp;
+			IDSetNumber( &TempElNV, NULL );
+		}
+		
+		
+		
+	}
+
+	//if not reasonable
+	else
+	{//use the users temperature if its reasonable
+		if(TempElN[0].value > -17.0 && TempElN[0].value < 17.0)
+			temp = TempElN[0].value;
+	}
+
+	//if read_el is resonable
+	if( dummy_el >0 && dummy_el < 3.14159/2.0 + 0.1*3.14159/180 )
+	{
+		//update el for autocollimation and user
+		el = dummy_el;
+		TempElN[1].value=el*180/3.14159;
+		IDSetNumber(&TempElNV, "Setting Elevation");
+
+		badread = false;
+	}
+	else
+	{
+		//read the old value or 
+		// the user input. 
+		el = TempElN[1].value;
+	}
+
 	//el = TempElN[1].value*3.14159/180.0;
-	//IDMessage(getDeviceName(), "the temp err is %f and the el is %f", temp, el*180/3.14159 );
+	if( badread )
+		IDMessage(getDeviceName(), "Erroneous temp or elevation read temp=%f el=%f", dummy_temp, dummy_el );
+	
 }
+
 
 bool Secondary::MoveNext()
 {
