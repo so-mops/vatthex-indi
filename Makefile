@@ -10,6 +10,7 @@ install: sdev
 	cp sdev /usr/local/bin/VATTHEX-INDI
 	cp systemd/VATTHEX-INDI.service /etc/systemd/system
 	cp startindi.sh /usr/local/bin/startindi
+	chmod a+x /usr/local/bin/startindi
 	chmod 664 /etc/systemd/system/VATTHEX-INDI.service
 	systemctl daemon-reload
 	systemctl enable VATTHEX-INDI.service

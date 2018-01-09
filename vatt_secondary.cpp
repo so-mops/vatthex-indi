@@ -742,7 +742,7 @@ void Secondary::TimerHit()
 	isReady = SetReadyState();
 	if (isReady)
 	{
-		refSV.s = IPS_OK;
+		//refSV.s = IPS_OK;
 		refS[0].s = ISS_OFF;
 	}
 	else
