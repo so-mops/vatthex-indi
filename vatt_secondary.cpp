@@ -125,7 +125,8 @@ bool Secondary::updateProperties()
 bool Secondary::Connect()
 {
 
-	DefaultDevice::Connect();
+	setConnected(true, IPS_OK);
+
 	//the port number is hardcoded because the 
 	//PI C-887 only allows you to talk to it on
 	//port 50000.
@@ -308,6 +309,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 *******************************/
 bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states, char *names[], int n)
 {
+
 	DefaultDevice::ISNewSwitch(dev, name, states, names, n);
 	ISwitchVectorProperty *mysvp;
 	mysvp = getSwitch(name);
@@ -1041,7 +1043,8 @@ int Secondary::GetTempAndEl()
 		//update el for autocollimation and user
 		el = dummy_el;
 		TempElN[1].value=el*180/3.14159;
-		IDSetNumber(&TempElNV, "Setting Elevation");
+		IDSetNumber(&TempElNV, NULL);
+		
 
 		badread = false;
 	}
