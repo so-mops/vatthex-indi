@@ -41,12 +41,12 @@ class Secondary : public INDI::DefaultDevice
 	bool _GetHexPos(Axis ax[]);
 	bool _MoveOneAxis(Axis *ax);
 	bool MoveNext();
-	int ConnectHex(const char *host, int port);
+	int ConnectHex(const char *);
 	bool fill();
 	int ID;
 	bool setNumber(INumberVectorProperty *, double values, char * names[], int);
 	bool isReferenced(Axis xp[]);
-	bool controllerIsAlive();
+	bool controllerIsAlive(char *);
 	bool isConnected();
 	bool connectionWentBad=false;
 
@@ -109,7 +109,7 @@ class Secondary : public INDI::DefaultDevice
 	unsigned short commerr_count=0;
 
 	//should probably read this in from a config file
-	const char *serial_number = "SN 117021835";
+	const char *serial_numbers[2] = {"SN 117021835", "SN 0"};
 
 
   protected:

@@ -125,18 +125,20 @@ bool Secondary::updateProperties()
 bool Secondary::Connect()
 {
 
-	setConnected(true, IPS_OK);
+	//The below line caused a crash on the emulator.
+	//setConnected(true, IPS_OK);
 
 	//the port number is hardcoded because the 
 	//PI C-887 only allows you to talk to it on
 	//port 50000.
 
-	
-	if (!controllerIsAlive())
+	char szDescription[500];
+	if ( !controllerIsAlive(szDescription) )
 	{//Cant find controller on network let user know
 		return false;
+		setConnected(false, IPS_ALERT);
 	}
-	if( !ConnectHex( HexAddrT[0].text, PI_PORTNUM ) )
+	if( !ConnectHex( (const char *) szDescription ) )
 	{//Cant connect let user know;
 		
 		return false;
@@ -418,20 +420,21 @@ bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char
 
 /************************************************
  * ConnectHex
- * Args
- *
- *
- *
+ * Args host=> hostname of the hexapod controller.
+ * 	port=> port number the hexapod listens on.
+ * 	
+ *Descr: Use PI_ConnectTCPIP to connect to the
+ *	controller. 
  *
  *
  *
  * **********************************************/
 
-int Secondary::ConnectHex( const char *host="localhost", int port=5200 ) 
+int Secondary::ConnectHex( const char *hostDescription ) 
 {
 	char szIDN[200];
-	IDMessage(getDeviceName(), "Attempting to connect to %s, %i", host, port);
-	ID = PI_ConnectTCPIP(host,port);
+	IDMessage(getDeviceName(), "Attempting to connect to %s", hostDescription );
+	ID = PI_ConnectTCPIPByDescription(hostDescription);
 	if(ID<0)
 	{
 		IDMessage(getDeviceName(), "Hex not connected %i", ID);
@@ -452,23 +455,52 @@ int Secondary::ConnectHex( const char *host="localhost", int port=5200 )
 	}
 }
 
-bool Secondary::controllerIsAlive()
-{
-	char devs[500];
-	PI_EnumerateTCPIPDevices( devs, 500, "" );
-	std::string sdevs = std::string(devs);
-	if( sdevs.find(serial_number) == std::string::npos )
-	{
 
-		IDMessage(getDeviceName(), "Could not find device %s (secondary controller) on the network", serial_number );
-		IDMessage(getDeviceName(), "Check network cables, power then try a restart.");
-		return false;
-	}
-	else
+/***************************************************
+ *Name: controllIsAlive
+ * Args: szDescription=>PI identifier string to be
+ * 	populated by PI_EnumerateTCPIPDevices
+ *
+ * Descr: Uses the hard coded serial numbers
+ *	from the header file to scan for 
+ *	the VATT hexapod PI controller. The serial
+ *	Numbers are that for the actual controller
+ *	and the PI Hexapod Emulator. It first looks
+ *	for the actual hexapod then the emulator.
+ *	Once a controller is found it populates
+ *	the szDescription argument, which is later
+ *	used for the connection. In this way the
+ *	only information we need to connect is the 
+ *	serial number. 
+ *
+ *Returns: True on finding the controller otherwise
+ * 	False
+ *
+ * **************************************************/
+bool Secondary::controllerIsAlive(char *szDescription)
+{
+	int nPIdevices;
+	bool ignore_serial = true;
+	for ( int ii=0; ii<2; ii++ )
 	{
-		IDMessage( getDeviceName(), "Secondary Controller found will attempt to connect.");
-		return true;
+		nPIdevices=PI_EnumerateTCPIPDevices( szDescription, 500, serial_numbers[ii] );
+		if( nPIdevices == 0 )
+			continue;
+		else if(nPIdevices == 1)
+		{
+			IDMessage(getDeviceName(), "Found Device %s", szDescription );
+			return true;
+		}
+		else if(nPIdevices<0)
+		{	
+			IDMessage(getDeviceName(), "There was an error when scanning for hexapod controller");
+			return false;
+		}
+
 	}
+	
+	IDMessage(getDeviceName(), "We could not find the hexapod controller on the network. Check network cables, power, then try a restart.");
+	return false;
 }
 
 /*******************************************************************
@@ -564,8 +596,8 @@ bool Secondary::_GetHexPos(Axis *hexpos)
 bool Secondary::isConnected()
 {	
 	int isConned = true;
-	
-	if (!controllerIsAlive())
+	char szDescription[500];
+	if (!controllerIsAlive(szDescription))
 	{
 		PI_CloseConnection(ID);
 		ID=-1;
@@ -710,11 +742,12 @@ bool Secondary::fill()
 ********************************/
 void Secondary::TimerHit()
 {
+	char szDescription[500];
 	if( ID < 0 )
 	{
 		//if we get here, it is likely that the hexapod lost connection
 		//to the network or lost power while we were connected. 
-		if( connectionWentBad && controllerIsAlive() )
+		if( connectionWentBad && controllerIsAlive(szDescription) )
 		{
 			//Let the user know we can connect again.
 			setConnected(false, IPS_BUSY, "Controller is back up try connecting.");
@@ -981,7 +1014,7 @@ int Secondary::GetTempAndEl()
 
 
 	char rqbuff[200];
-	ng_request("ALL ", rqbuff );
+	ng_request( (char *) "ALL ", rqbuff );
 	bool gettingTemp = false;
 	
 	std::string rqstr = rqbuff;

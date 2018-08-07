@@ -33,7 +33,7 @@ RUN cd /driver/build && make
 EXPOSE 7624
 
 #CMD sleep 1000
-CMD /usr/bin/indiserver -vv /driver/build/sdev
+CMD /usr/bin/indiserver -vvv /driver/build/sdev
 
 
 

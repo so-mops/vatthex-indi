@@ -50,7 +50,7 @@ char data[MAX_MSG];
 char term = '\n';
 char preamble[100];
 
-initialize("10.0.1.10", 5750);
+initialize((char *)"10.0.1.10", 5750);
 
 /*	if(!initialized)
 	{
@@ -74,13 +74,13 @@ initialize("10.0.1.10", 5750);
  
   rc = connect(sd, (struct sockaddr *) &servAddr, sizeof(servAddr));
   if(rc<0) {
-    indiNetErr("cannot connect ");
+    indiNetErr( (char *) "cannot connect ");
     return(1);
   }
     rc = send(sd, data, strlen(data) + 1, 0);
     
     if(rc<0) {
-	indiNetErr("cannot send data ");
+	indiNetErr( (char *)"cannot send data ");
       close(sd);
       return(1);
     
@@ -88,7 +88,7 @@ initialize("10.0.1.10", 5750);
 
     if (recv(sd,&data,sizeof(data),0) == -1)
       		{
-		indiNetErr("recv error");
+		indiNetErr( (char *)"recv error");
 		return(1);
       		}
     //printf("got: %s\n", data);
@@ -129,7 +129,7 @@ h = gethostbyname(name);
   /* create socket */
   sd = socket(AF_INET, SOCK_STREAM, 0);
   if(sd<0) {
-    indiNetErr("cannot open socket ");
+    indiNetErr( (char *)"cannot open socket ");
     return 1;
   }
 
@@ -141,7 +141,7 @@ h = gethostbyname(name);
   rc = bind(sd, (struct sockaddr *) &localAddr, sizeof(localAddr));
   if(rc<0) {
     printf("cannot bind port TCP %u\n",port);
-    indiNetErr("error ");
+    indiNetErr( (char *)"error ");
     return 1;
   }
 
