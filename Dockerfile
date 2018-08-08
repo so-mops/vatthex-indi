@@ -22,13 +22,7 @@ RUN cd /driver/build && make
 
 
 
-#RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-5.0 100
-#RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-5.0 100
 
-# Build and install gtest and gmock libraries
-#WORKDIR /usr/src/googletest
-#RUN cmake .
-#RUN make install
 
 EXPOSE 7624
 

@@ -20,10 +20,10 @@
 #define SLEEP_BTWN_CALLS 1e4 //10 ms
 
 #define PI_PORTNUM 50000
-#define MILI2MICRON 1e3
+#define MILLI2MICRON 1e3
 #define DEG2ASEC 3600.0
 #define MAX_COMMERR 0
-
+#define PFILENAME "posfile.dat"
 std::unique_ptr<Secondary> secondary(new Secondary());
 
 
@@ -83,6 +83,18 @@ Secondary::Secondary()
 	//negative ID means we haven't connected or 
 	//the connection was broken. 
 	ID=-1;
+
+	//Create the Zero position
+	InitAllAxes(ZeroPos);
+	//This should be read froma config file.
+	ZeroPos[XX].pos = -1000/MILLI2MICRON;
+	ZeroPos[YY].pos = -700/MILLI2MICRON;
+	ZeroPos[ZZ].pos = -1750/MILLI2MICRON;
+
+
+	ZeroPos[VV].pos = 40/DEG2ASEC;
+	ZeroPos[UU].pos = -60/DEG2ASEC;
+	ZeroPos[WW].pos = 0;
 }
 
 Secondary::~Secondary()
@@ -126,7 +138,7 @@ bool Secondary::Connect()
 {
 
 	//The below line caused a crash on the emulator.
-	//setConnected(true, IPS_OK);
+	setConnected(true, IPS_BUSY, "Attempting to connect");
 
 	//the port number is hardcoded because the 
 	//PI C-887 only allows you to talk to it on
@@ -174,7 +186,7 @@ bool Secondary::Disconnect()
 	refSV.s = IPS_IDLE;
 	IDSetSwitch(&refSV, NULL);
 	
-
+	IDMessage(getDeviceName(), "log file is %s", INDI::Logger::getLogFile().c_str());
     return true;
 }
 
@@ -190,27 +202,22 @@ const char *Secondary::getDefaultName()
 bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], char *names[], int n)
 {
 	INumberVectorProperty * myv = getNumber(name);
-	if( strcmp(name, "PosX" ) == 0 )
+	if( strcmp( name, "PosX" ) == 0 )
 	{
 		
-		NextPos[XX].pos = values[0]/MILI2MICRON;
+		NextPos[XX].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
 		if( corrS[0].s == ISS_ON )
-				
-				_MoveOneAxis(  &CorrNextPos[XX] );
+			_MoveOneAxis(  &CorrNextPos[XX] );
 		else
-				
-				_MoveOneAxis( &NextPos[XX] );
-				
+			_MoveOneAxis( &NextPos[XX] );
 
-		
-		
 	}
 	if( strcmp(name, "PosY" ) == 0 )
 	{
-		NextPos[YY].pos = values[0]/MILI2MICRON;
+		NextPos[YY].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -218,14 +225,12 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 				
 				_MoveOneAxis( &CorrNextPos[YY] );
 		else
-				
 				_MoveOneAxis( &NextPos[YY] );
-	
 		
 	}
 	if( strcmp(name, "PosZ" ) == 0 )
 	{
-		NextPos[ZZ].pos = values[0]/MILI2MICRON;
+		NextPos[ZZ].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
 		
@@ -251,7 +256,6 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 				
 				_MoveOneAxis( &NextPos[WW] );
 
-		
 	}
 	if( strcmp(name, "PosV" ) == 0 )
 	{
@@ -266,7 +270,6 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 				
 				_MoveOneAxis(  &NextPos[VV] );
 
-	
 	}
 	if( strcmp(name, "PosU" ) == 0 )
 	{
@@ -324,43 +327,77 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		{
 			mysvp->sp[0].s = ISS_OFF;
 			IDSetSwitch( mysvp, "Hexapod is not connected please connect." );
-
 			setConnected(false, IPS_BUSY, "");
-			
 		}
+
 		else if( mysvp->sp[0].s == ISS_ON )
-		{	
+		{
 
 
-			
 			/*
 			 * Corrections Have Been Switched
 			 * First thing we do is align the 
 			 * optics by sending each axis
 			 * to its nominal zero point.
 			 * */
+
+			if ( access(PFILENAME, F_OK) != -1)
+			{//If position file exists go to that position
+				posfile = fopen(PFILENAME, "r");
+				fscanf(posfile, "%lf %lf %lf %lf %lf", 
+					&NextPos[XX].pos, 
+					&NextPos[YY].pos, 
+					&NextPos[ZZ].pos, 
+					&NextPos[VV].pos, 
+					&NextPos[UU].pos );
+			}
+			else
 			
-			NextPos[XX].pos = -1000/MILI2MICRON;
+			{//We don't have a posfile go to zero. 
+				IDMessage(getDeviceName(), "No position file moving to zero.");
+				deepcopy(NextPos, ZeroPos);
+			}
+
+			//Let the user know that 
+			//the axes will start moving.
+			PosLatNV_X.s=IPS_BUSY;
+			PosLatNV_Y.s=IPS_BUSY;
+			PosLatNV_Z.s=IPS_BUSY;
+
+			PosRotNV_W.s=IPS_BUSY;
+			PosRotNV_V.s=IPS_BUSY;
+			PosRotNV_U.s=IPS_BUSY;
+
+			IDSetNumber(&PosLatNV_X, NULL);
+			IDSetNumber(&PosLatNV_Y, NULL);
+			IDSetNumber(&PosLatNV_Z, NULL);
+			IDSetNumber(&PosRotNV_W, NULL);
+			IDSetNumber(&PosRotNV_V, NULL);
+			IDSetNumber(&PosRotNV_U, NULL);
+
+			//TODO move all axes at once.
+			//NextPos[XX].pos = -1000/MILLI2MICRON;
+			//
 			_MoveOneAxis( &NextPos[XX] );
 		
-			usleep(SLEEP_BTWN_CALLS);
+			usleep( SLEEP_BTWN_CALLS );
 
-			NextPos[YY].pos = -700/MILI2MICRON;
+			//NextPos[YY].pos = -700/MILLI2MICRON;
 			_MoveOneAxis( &NextPos[YY] );
 			
 			usleep(SLEEP_BTWN_CALLS);
 
-			NextPos[ZZ].pos = -1750/MILI2MICRON;
+			//NextPos[ZZ].pos = -1750/MILLI2MICRON;
 			_MoveOneAxis( &NextPos[XX]);
 
 			usleep(SLEEP_BTWN_CALLS);
 
-			NextPos[VV].pos = 40/DEG2ASEC;
-			_MoveOneAxis( &NextPos[VV]);
+			//NextPos[VV].pos = 40/DEG2ASEC;
+			_MoveOneAxis( &NextPos[VV] );
 
 			usleep(SLEEP_BTWN_CALLS);
 
-			NextPos[UU].pos = -60/DEG2ASEC;
+			//NextPos[UU].pos = -60/DEG2ASEC;
 			_MoveOneAxis( &NextPos[UU]);
 
 			//Get Temp and elevation now
@@ -378,19 +415,44 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		{
 			//Corrections are off so NextPos and 
 			//Corrected next pos are the same.
-			deepcopy(CorrNextPos, NextPos);
+			deepcopy( CorrNextPos, NextPos );
 			mysvp->s = IPS_IDLE;
-			_GetHexPos(  Pos );
+			_GetHexPos( Pos );
+
+			//Remember the Pos of the hexapod 
+			//So we can get back there when
+			//we run auto collimate next. 
+			posfile = fopen( PFILENAME, "w");
+			fprintf(posfile, "%lf %lf %lf %lf %lf", 
+				NextPos[XX].pos*MILLI2MICRON, 
+				NextPos[YY].pos*MILLI2MICRON, 
+				NextPos[ZZ].pos*MILLI2MICRON, 
+				NextPos[VV].pos*DEG2ASEC, 
+				NextPos[UU].pos*DEG2ASEC);
 		}
+
 		IDSetSwitch( &corrSV, NULL);
 	}
 	else if( strcmp("ref", mysvp->name) == 0 )
 	{
-		mysvp->s = IPS_BUSY;
-		IDSetSwitch(mysvp, NULL);
-		ReferenceIfNeeded(ID, Pos);
-		mysvp->s = IPS_OK;
-		IDSetSwitch(mysvp, NULL);
+		if(ID < 0)
+		{
+			mysvp->s = IPS_IDLE;
+			mysvp->sp[0].s=ISS_OFF;
+			IDSetSwitch(mysvp, "Can't reference Not connected!");
+			setConnected(false, IPS_BUSY);
+		
+		}
+		else
+		{
+						mysvp->s = IPS_BUSY;
+			IDSetSwitch(mysvp, "Referencing Switch");
+			ReferenceIfNeeded(ID, Pos);
+			mysvp->s = IPS_OK;
+			IDSetSwitch(mysvp, NULL);
+
+
+		}
 
 	}
 }
@@ -456,6 +518,7 @@ int Secondary::ConnectHex( const char *hostDescription )
 }
 
 
+
 /***************************************************
  *Name: controllIsAlive
  * Args: szDescription=>PI identifier string to be
@@ -503,6 +566,9 @@ bool Secondary::controllerIsAlive(char *szDescription)
 	return false;
 }
 
+
+
+
 /*******************************************************************
 * _MoveOneAxis
 * arg: ax=> pointer to single Axis of hexapod
@@ -514,9 +580,6 @@ bool Secondary::controllerIsAlive(char *szDescription)
 * Scott Swindell 2017/11/29
 *
 *******************************************************************/
-
-
-
 bool Secondary::_MoveOneAxis( Axis *ax )
 {
 	int retn = true;
@@ -597,12 +660,18 @@ bool Secondary::isConnected()
 {	
 	int isConned = true;
 	char szDescription[500];
+	if(!DefaultDevice::isConnected())
+	{//User hasn't connected
+		return false;
+	}
+
 	if (!controllerIsAlive(szDescription))
-	{
+	{//Gui has set connected but connection
+	//to the controller has been lost. 
 		PI_CloseConnection(ID);
 		ID=-1;
 		
-		//Let gui know correciton is off
+		//Let gui know correction is off
 		corrS[0].s = ISS_OFF;
 		IDSetSwitch(&corrSV, NULL);
 
@@ -613,7 +682,7 @@ bool Secondary::isConnected()
 		setConnected(false, IPS_ALERT, "Could not communicate with the Secondary Controller, you may have to restart it.");
 		connectionWentBad=true;
 		
-		isConned=0;
+		isConned=false;
 
 	}
 	return isConned;
@@ -664,16 +733,16 @@ bool Secondary::fill()
 			
 
 	//X axis for corrections is Y axis of PI hexapod
-	IUFillNumber(&PosLatN_X[0] , "Y", "X Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
+	IUFillNumber(&PosLatN_X[0] , "Y", "X Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_X );
 	
 	//Y axis for corrections (auto collimation) is X axis of PI Hexapod
-	IUFillNumber(&PosLatN_Y[0] , "X", "Y Axis ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
+	IUFillNumber(&PosLatN_Y[0] , "X", "Y Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_Y );
 
-	IUFillNumber(&PosLatN_Z[0] , "Z", "Focus ", "%5.0f", -5.0*MILI2MICRON, 5.0*MILI2MICRON, 1, 0);
+	IUFillNumber(&PosLatN_Z[0] , "Z", "Focus ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_Z,  PosLatN_Z, 1, getDeviceName(), "PosZ", "Linear Position Z", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_Z );
 
@@ -834,7 +903,7 @@ void Secondary::TimerHit()
 	* The below loop is how we match the INDI IAxis	
 	* type to the vatthex.so Axis type. Basically
 	* I use the last character of the name of the 
-	* IAxis (X, Y etc) to macthe the letter member
+	* IAxis (X, Y etc) to match the letter member
 	* of the Axis structure. To make this even 
 	* more confusing the X and Y axes are reversed.
 	*	
@@ -845,7 +914,7 @@ void Secondary::TimerHit()
 	{
 		
 		if ( iter->letter[0] == 'X' || iter->letter[0] == 'Y' || iter->letter[0] == 'Z' )
-			unitconversion = MILI2MICRON;
+			unitconversion = MILLI2MICRON;
 		else
 			unitconversion = DEG2ASEC;
 
@@ -868,10 +937,12 @@ void Secondary::TimerHit()
 
 
 	/**********************************************************************
+	* TLDR; desperate last measure to see if we are not connected to the Hexapod.
+	*
 	* It seems likely that the controllerIsAlive
 	* method could return true even when the GCS connection
 	* is dead. PI uses a TCP port 50000 for GCS commands
-	* but the isControllerAlive uses PI_EnumerateTCPIPDevices
+	* but the controllerIsAlive uses PI_EnumerateTCPIPDevices
 	* to see if we can find the secondary controller/hexapod
 	* on the network. I would guess that PI_EnumerateTCPIPDevices
 	* uses some sort of multicast packet to see if the hexapod
@@ -882,7 +953,6 @@ void Secondary::TimerHit()
 	* to let the user know that we are no longer communicating
 	* with the hexapod. This logic is done in the folowing if
 	* statement.
-	* TLDR; desperate last measure to see if we are not connected to the Hexapod.
 	**********************************************************************/
 
 	if(commerr_count > MAX_COMMERR)
@@ -904,6 +974,7 @@ void Secondary::TimerHit()
 	}
 	//End desperate attempt.
 
+	//Do it again in 1 second.
 	TimerID = SetTimer( (int) 1000 );
 	
 	
@@ -939,9 +1010,7 @@ bool Secondary::SetReadyState()
 	{
 		name[3] = iter->letter[0];
 		IAxis = getNumber( name );
-		if(isReady)
-			IAxis->s = IPS_IDLE;
-		else
+		if(!isReady)
 			IAxis->s = IPS_BUSY;
 		IDSetNumber(IAxis, NULL);
 		
@@ -977,7 +1046,7 @@ bool Secondary::SetMoveState()
 		if(isMoving)
 			IAxis->s = IPS_BUSY;
 		else
-			IAxis->s = IPS_IDLE;
+			IAxis->s = IPS_OK;
 		IDSetNumber(IAxis, NULL);
 		
 	}
@@ -1005,16 +1074,21 @@ void Secondary::deepcopy(Axis *copyto, Axis *copyfrom)
 *
 *
 *
-* Scott Swindell 2017/10/2017
+* Scott Swindell 10/2017
 *
 **********************************************/
 
 int Secondary::GetTempAndEl()
 {
 
-
+	//get Elevation from NG server on vatttel
 	char rqbuff[200];
-	ng_request( (char *) "ALL ", rqbuff );
+
+
+	//fake it for now 
+	//ng_request( (char *) "ALL ", rqbuff );
+	strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 90.0, 85.0  ...  "  );
+
 	bool gettingTemp = false;
 	
 	std::string rqstr = rqbuff;
@@ -1028,6 +1102,7 @@ int Secondary::GetTempAndEl()
 	
 	size_t str_begin = rqstr.find( " ", 40 );
 	dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) )*3.14159/180.0;
+	
 
 	//only grab the temp every 120 seconds
 	vatttel_counter++;
@@ -1043,7 +1118,7 @@ int Secondary::GetTempAndEl()
 		dummy_temp = TempElN[0].value;
 	}
 	
-
+	IDMessage(getDeviceName(), "dummy_temp is %f", dummy_temp);
 	//if the read temp is reasonable
 	if( dummy_temp > -17.0 && dummy_temp < 17.0 )
 	{
@@ -1058,9 +1133,6 @@ int Secondary::GetTempAndEl()
 			TempElN[0].value = temp;
 			IDSetNumber( &TempElNV, NULL );
 		}
-		
-		
-		
 	}
 
 	//if not reasonable
@@ -1070,9 +1142,8 @@ int Secondary::GetTempAndEl()
 			temp = TempElN[0].value;
 	}
 
-	//if read_el is resonable
 	if( dummy_el >0 && dummy_el < 3.14159/2.0 + 0.1*3.14159/180 )
-	{
+	{//if read_el is resonable
 		//update el for autocollimation and user
 		el = dummy_el;
 		TempElN[1].value=el*180/3.14159;

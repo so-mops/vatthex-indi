@@ -59,8 +59,9 @@ class Secondary : public INDI::DefaultDevice
 	Axis NextPos[6];
 	Axis CorrPos[6];
 	Axis CorrNextPos[6];
+	Axis ZeroPos[6];
 
-
+	FILE *posfile;
 	//hex positions
 	INumberVectorProperty PosLatNV_X;
 	INumber PosLatN_X[1];

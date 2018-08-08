@@ -1,6 +1,4 @@
 
-
-
 all: clean sdev
 
 sdev:
