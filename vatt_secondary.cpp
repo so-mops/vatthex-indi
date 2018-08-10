@@ -186,7 +186,6 @@ bool Secondary::Disconnect()
 	refSV.s = IPS_IDLE;
 	IDSetSwitch(&refSV, NULL);
 	
-	IDMessage(getDeviceName(), "log file is %s", INDI::Logger::getLogFile().c_str());
     return true;
 }
 
@@ -343,6 +342,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 
 			if ( access(PFILENAME, F_OK) != -1)
 			{//If position file exists go to that position
+				IDMessage(getDeviceName(), "Reading position file");
 				posfile = fopen(PFILENAME, "r");
 				fscanf(posfile, "%lf %lf %lf %lf %lf", 
 					&NextPos[XX].pos, 
@@ -446,7 +446,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		else
 		{
 						mysvp->s = IPS_BUSY;
-			IDSetSwitch(mysvp, "Referencing Switch");
+			IDSetSwitch(mysvp, "Referencing Hexapod");
 			ReferenceIfNeeded(ID, Pos);
 			mysvp->s = IPS_OK;
 			IDSetSwitch(mysvp, NULL);
@@ -1111,14 +1111,12 @@ int Secondary::GetTempAndEl()
 		vatttel_counter=0;
 		gettingTemp=true;
 		dummy_temp = GetStrutTemp( temperr );
-		IDMessage( getDeviceName(), "I just grabbed temp");
 	}
 	else
 	{
 		dummy_temp = TempElN[0].value;
 	}
 	
-	IDMessage(getDeviceName(), "dummy_temp is %f", dummy_temp);
 	//if the read temp is reasonable
 	if( dummy_temp > -17.0 && dummy_temp < 17.0 )
 	{
