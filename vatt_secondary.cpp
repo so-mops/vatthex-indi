@@ -137,7 +137,6 @@ bool Secondary::updateProperties()
 bool Secondary::Connect()
 {
 
-	//The below line caused a crash on the emulator.
 	setConnected(true, IPS_BUSY, "Attempting to connect");
 
 	//the port number is hardcoded because the 
@@ -184,8 +183,9 @@ bool Secondary::Disconnect()
 	//Let Gui know reference may be wrong
 	refS[0].s = ISS_OFF;
 	refSV.s = IPS_IDLE;
-	IDSetSwitch(&refSV, NULL);
-	
+	IDSetSwitch(&refSV, "Not referenced");
+
+	SetIAxisState(IPS_IDLE);
     return true;
 }
 
@@ -326,7 +326,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		{
 			mysvp->sp[0].s = ISS_OFF;
 			IDSetSwitch( mysvp, "Hexapod is not connected please connect." );
-			setConnected(false, IPS_BUSY, "");
+			setConnected(false, IPS_ALERT, "");
 		}
 
 		else if( mysvp->sp[0].s == ISS_ON )
@@ -500,6 +500,7 @@ int Secondary::ConnectHex( const char *hostDescription )
 	if(ID<0)
 	{
 		IDMessage(getDeviceName(), "Hex not connected %i", ID);
+		setConnected(false, IPS_ALERT, NULL);
 		return false;
 	}
 	
@@ -547,6 +548,7 @@ bool Secondary::controllerIsAlive(char *szDescription)
 	for ( int ii=0; ii<2; ii++ )
 	{
 		nPIdevices=PI_EnumerateTCPIPDevices( szDescription, 500, serial_numbers[ii] );
+		
 		if( nPIdevices == 0 )
 			continue;
 		else if(nPIdevices == 1)
@@ -585,7 +587,9 @@ bool Secondary::_MoveOneAxis( Axis *ax )
 	int retn = true;
 	if(ID<0)
 	{
-		IDMessage( getDeviceName(), "Secondary controller not connected!" );
+		IDMessage( getDeviceName(), "Please connect the secondary controller." );
+
+		setConnected(false, IPS_ALERT, NULL);
 		return false;
 	}
 	if(!MoveOneAxis(ID, ax))
@@ -655,7 +659,6 @@ bool Secondary::_GetHexPos(Axis *hexpos)
 * Scott Swindell 2017/11/29
 *
 *************************************************/
-
 bool Secondary::isConnected()
 {	
 	int isConned = true;
@@ -980,6 +983,24 @@ void Secondary::TimerHit()
 	
 }
 
+void Secondary::SetIAxisState(IPState state)
+{
+
+	PosLatNV_X.s = state;
+	IDSetNumber(&PosLatNV_X, NULL);
+	PosLatNV_Y.s = state;
+	IDSetNumber(&PosLatNV_Y, NULL);
+	PosLatNV_Z.s = state;
+	IDSetNumber(&PosLatNV_Z, NULL);
+	
+	PosRotNV_W.s = state;
+	IDSetNumber(&PosRotNV_W, NULL);
+
+	PosRotNV_U.s = state;
+	IDSetNumber(&PosRotNV_U, NULL);
+	PosRotNV_V.s = state;
+	IDSetNumber(&PosRotNV_V, "SETTING THE STATES AS REQUESTED");
+}
 
 /********************************************
 * SetReadyState
@@ -1024,7 +1045,7 @@ bool Secondary::SetReadyState()
  * Sets the state of the positions
  * hexapod axes. If its moving
  * ts IPS_BUSY, if not IPS_IDLE
- * which show up as Yelow and 
+ * which shows up as Yellow and 
  * transparent respectively in the gui
  *
  *

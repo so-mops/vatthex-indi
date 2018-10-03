@@ -49,7 +49,7 @@ class Secondary : public INDI::DefaultDevice
 	bool controllerIsAlive(char *);
 	bool isConnected();
 	bool connectionWentBad=false;
-
+	void SetIAxisState(IPState state);
 	int GetTempAndEl( );
 
 	void deepcopy(Axis *, Axis *);
@@ -110,7 +110,7 @@ class Secondary : public INDI::DefaultDevice
 	unsigned short commerr_count=0;
 
 	//should probably read this in from a config file
-	const char *serial_numbers[2] = {"SN 117021835", "SN 0"};
+	const char *serial_numbers[2] = {"117021835", "SN 0"};
 
 
   protected:
