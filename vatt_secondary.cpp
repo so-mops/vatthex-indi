@@ -342,15 +342,33 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 
 			if ( access(PFILENAME, F_OK) != -1)
 			{//If position file exists go to that position
-				IDMessage(getDeviceName(), "Reading position file");
+				double dummyx=-1;
+				double dummyy=-1;
+				double dummyz=-1;
+				double dummyv=-1;
+				double dummyu=-1;
 				posfile = fopen(PFILENAME, "r");
-				fscanf(posfile, "%lf %lf %lf %lf %lf", 
+				int fail = fscanf(posfile, "%lf %lf %lf %lf %lf", 
+
 					&NextPos[XX].pos, 
 					&NextPos[YY].pos, 
 					&NextPos[ZZ].pos, 
 					&NextPos[VV].pos, 
 					&NextPos[UU].pos );
+				IDMessage(getDeviceName(), "Reading position file %i", fail);
+				if(fail == 5)
+				{
+
+				}
+				else
+				{
+					
+					IDMessage(getDeviceName(), "posfile.dat exists but could not be read. Corrupted?");
+					deepcopy(NextPos, ZeroPos);
+				}
+				fclose(posfile);
 			}
+
 			else
 			
 			{//We don't have a posfile go to zero. 
@@ -422,14 +440,21 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			//Remember the Pos of the hexapod 
 			//So we can get back there when
 			//we run auto collimate next. 
+			
+			
 			posfile = fopen( PFILENAME, "w");
-			fprintf(posfile, "%lf %lf %lf %lf %lf", 
+			
+			int fail = fprintf(posfile, "%lf %lf %lf %lf %lf", 
 				NextPos[XX].pos*MILLI2MICRON, 
 				NextPos[YY].pos*MILLI2MICRON, 
 				NextPos[ZZ].pos*MILLI2MICRON, 
 				NextPos[VV].pos*DEG2ASEC, 
 				NextPos[UU].pos*DEG2ASEC);
+
+			fclose(posfile);
+
 		}
+		
 
 		IDSetSwitch( &corrSV, NULL);
 	}
@@ -596,7 +621,8 @@ bool Secondary::_MoveOneAxis( Axis *ax )
 	{
 		IDMessage( getDeviceName(), "Axis %s failed to move to %f", ax->letter, ax->pos );
 		isConnected();
-		commerr_count++;
+		//Don't count this as a commerr because it may be a limit issue. 
+		//commerr_count++;
 		retn=false;
 	}
 	else 
@@ -841,6 +867,7 @@ void Secondary::TimerHit()
 	char err[300];
 	double unitconversion;
 	
+	bool axisMoveState;
 
 	_GetHexPos(  Pos );
 	deepcopy( CorrPos, Pos );
@@ -881,7 +908,18 @@ void Secondary::TimerHit()
 				//we have veered too far from the correct position... lets move
 				if( fabs( CorrNextPos[ii].pos - CorrPos[ii].pos ) > 0.0001 )
 				{
-					_MoveOneAxis( &CorrNextPos[ii] );
+					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
+
+					if(axisMoveState == false)
+					{
+						corrS[0].s = ISS_OFF;
+						corrSV.s = IPS_IDLE;
+						//delete the posfile in case that is what is causing the troubel
+						remove(PFILENAME);
+						IDSetSwitch(&corrSV, NULL);
+
+					}
+					
 
 					usleep(SLEEP_BTWN_CALLS);
 
@@ -965,10 +1003,12 @@ void Secondary::TimerHit()
 		
 		//Let gui know correciton is off
 		corrS[0].s = ISS_OFF;
+		corrSV.s = IPS_IDLE;
 		IDSetSwitch(&corrSV, NULL);
 
 		//Let Gui know reference maybe wrong
 		refS[0].s = ISS_OFF;
+		refSV.s = IPS_IDLE;
 		IDSetSwitch(&refSV, NULL);
 		
 		setConnected(false, IPS_ALERT, "Could not communicate with the Secondary Controller. Too many comm errors, you may have to restart it.");
