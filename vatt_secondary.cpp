@@ -445,11 +445,11 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			posfile = fopen( PFILENAME, "w");
 			
 			int fail = fprintf(posfile, "%lf %lf %lf %lf %lf", 
-				NextPos[XX].pos*MILLI2MICRON, 
-				NextPos[YY].pos*MILLI2MICRON, 
-				NextPos[ZZ].pos*MILLI2MICRON, 
-				NextPos[VV].pos*DEG2ASEC, 
-				NextPos[UU].pos*DEG2ASEC);
+				NextPos[XX].pos, 
+				NextPos[YY].pos, 
+				NextPos[ZZ].pos, 
+				NextPos[VV].pos, 
+				NextPos[UU].pos);
 
 			fclose(posfile);
 
@@ -1144,11 +1144,10 @@ int Secondary::GetTempAndEl()
 
 	//get Elevation from NG server on vatttel
 	char rqbuff[200];
-
-
-	//fake it for now 
-	//ng_request( (char *) "ALL ", rqbuff );
-	strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 90.0, 85.0  ...  "  );
+	char ngbuff[200];
+	
+	ng_request( (char *) "ALL ", rqbuff );
+	//strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 81.0, 85.0  ...  "  );
 
 	bool gettingTemp = false;
 	
@@ -1160,10 +1159,8 @@ int Secondary::GetTempAndEl()
 	double dummy_el;
 	bool badread = true;
 
-	
 	size_t str_begin = rqstr.find( " ", 40 );
 	dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) )*3.14159/180.0;
-	
 
 	//only grab the temp every 120 seconds
 	vatttel_counter++;
