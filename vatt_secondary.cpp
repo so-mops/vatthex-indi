@@ -333,12 +333,12 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		{
 
 
-			/*
+			/********************************
 			 * Corrections Have Been Switched
 			 * First thing we do is align the 
 			 * optics by sending each axis
 			 * to its nominal zero point.
-			 * */
+			 * ********************************/
 
 			if ( access(PFILENAME, F_OK) != -1)
 			{//If position file exists go to that position
@@ -1146,8 +1146,19 @@ int Secondary::GetTempAndEl()
 	char rqbuff[200];
 	char ngbuff[200];
 	
-	ng_request( (char *) "ALL ", rqbuff );
-	//strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 81.0, 85.0  ...  "  );
+	try
+	{
+		ng_request( (char *) "ALL ", rqbuff );
+	}
+	catch(const std::exception& e)
+	{
+		IDMessage(getDeviceName(), "**************************");
+		corrS[0].s = ISS_OFF;
+		corrSV.s = IPS_IDLE;
+		IDSetSwitch( &corrSV, "No communication with vatttel, turning off autocollimation");
+		return -1; 
+		//strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 81.0, 85.0  ...  "  );
+	}
 
 	bool gettingTemp = false;
 	
@@ -1218,7 +1229,7 @@ int Secondary::GetTempAndEl()
 	//el = TempElN[1].value*3.14159/180.0;
 	if( badread )
 		IDMessage(getDeviceName(), "Erroneous temp or elevation read temp=%f el=%f", dummy_temp, dummy_el );
-	
+	return 0;
 }
 
 
