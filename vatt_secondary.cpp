@@ -23,7 +23,14 @@
 #define MILLI2MICRON 1e3
 #define DEG2ASEC 3600.0
 #define MAX_COMMERR 0
-#define PFILENAME "posfile.dat"
+
+
+/*
+ * We should not hard code this file but 
+ * we are running in docker container so for 
+ * now this will suffice. 
+ * */
+#define PFILENAME "/data/posfile.dat"
 std::unique_ptr<Secondary> secondary(new Secondary());
 
 
@@ -333,12 +340,12 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		{
 
 
-			/*
+			/********************************
 			 * Corrections Have Been Switched
 			 * First thing we do is align the 
 			 * optics by sending each axis
 			 * to its nominal zero point.
-			 * */
+			 * ********************************/
 
 			if ( access(PFILENAME, F_OK) != -1)
 			{//If position file exists go to that position
@@ -1145,10 +1152,33 @@ int Secondary::GetTempAndEl()
 	//get Elevation from NG server on vatttel
 	char rqbuff[200];
 	char ngbuff[200];
-	
-	ng_request( (char *) "ALL ", rqbuff );
-	//strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 81.0, 85.0  ...  "  );
+	int ii;
 
+	try
+	{
+		ii=ng_request( (char *) "ALL ", rqbuff );
+		//IDMessage(getDeviceName(), "retn code is %i, rqbuff was '%s'", ii, rqbuff);
+	}
+	catch(const std::exception& e)
+	{
+		IDMessage(getDeviceName(), "**************************");
+		corrS[0].s = ISS_OFF;
+		corrSV.s = IPS_IDLE;
+		IDSetSwitch( &corrSV, "No communication with vatttel, turning off autocollimation");
+		return -1; 
+		//strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 81.0, 85.0  ...  "  );
+	}
+
+	if(strcmp(rqbuff, "") == 0)
+	{
+		IDMessage(getDeviceName(), "**************************");
+		corrS[0].s = ISS_OFF;
+		corrSV.s = IPS_IDLE;
+		IDSetSwitch( &corrSV, "No communication with vatttel, turning off autocollimation");
+		
+		return -1; 
+
+	}
 	bool gettingTemp = false;
 	
 	std::string rqstr = rqbuff;
@@ -1217,8 +1247,12 @@ int Secondary::GetTempAndEl()
 
 	//el = TempElN[1].value*3.14159/180.0;
 	if( badread )
+	{
 		IDMessage(getDeviceName(), "Erroneous temp or elevation read temp=%f el=%f", dummy_temp, dummy_el );
-	
+		return -1;
+	}
+
+	return 0;
 }
 
 
