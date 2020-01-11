@@ -27,3 +27,8 @@ It could be run standalone by simply running the indiserver command as shown abo
 The docker container is run in docker-compose fashion so the INDI driver is bundled with the INDI webclient and the webserver. As it stands now both this INDI driver and the [vatt-guidebox](https://github.com/so-mops/vatt-guidebox) INDI drivers are run in the same docker-compose bundle. The docker-compose file can be found [here](https://github.com/srswinde/indi_webclient/blob/master/docker-compose-vatt-guidebox.yml). 
 
 To have the docker-compose file run on startup we build a systemd service. This process is described in the [indi_webclient readme](https://github.com/srswinde/indi_webclient/blob/master/README.md). 
+
+
+## libvatthex
+
+The lower level control software is called libvatthex and is built upon the PI hexapod c library that comes with the hexapod. the libvatthex is a submodule of this rep but for some reason it is no longer in sync with this repo. You can find the source [here](https://github.com/so-mops/libvatthex)
