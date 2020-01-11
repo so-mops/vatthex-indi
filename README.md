@@ -19,7 +19,7 @@ This software is an INDI driver and is meant to be run with an indiserver. Typic
 indiserver ./sdev
 ```
 
-Because of the portability issues with INDI, it is currently run in a [docker container](https://hub.docker.com/r/srswinde/indihex). This container can be built with build.sh. Building the dockerfile will also make the indidriver and build all the 
+Because of the portability issues with INDI, it is currently run in a [docker container](https://hub.docker.com/r/srswinde/indihex). This container can be built with [build.sh](https://github.com/so-mops/vatthex-indi/blob/master/build.sh). Building the dockerfile will also make the indidriver and build all the 
 libvatthex stuff. See [the Dockerfile](https://github.com/so-mops/vatthex-indi/blob/master/Dockerfile) for details. 
 
 It could be run standalone by simply running the indiserver command as shown above.
@@ -31,4 +31,4 @@ To have the docker-compose file run on startup we build a systemd service. This 
 
 ## libvatthex
 
-The lower level control software is called libvatthex and is built upon the PI hexapod c library that comes with the hexapod. the libvatthex is a submodule of this rep but for some reason it is no longer in sync with this repo. You can find the source [here](https://github.com/so-mops/libvatthex)
+The lower level control software is called libvatthex and is built upon the PI hexapod c library that comes with the hexapod. the libvatthex is a submodule of this rep but for some reason it is no longer in sync with this repo. You can find the source [here](https://github.com/so-mops/libvatthex).
