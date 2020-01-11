@@ -24,4 +24,6 @@ libvatthex stuff. See [the Dockerfile](https://github.com/so-mops/vatthex-indi/b
 
 It could be run standalone by simply running the indiserver command as shown above.
 
-The docker container is run in docker-compose fashion so the INDI driver is bundeled with the INDI webclient. As it stands now both this INDI driver and the [vatt-guidebox](https://github.com/so-mops/vatt-guidebox) INDI drivers are run in the same docker-compose bundle. The docker-compose file can be found [here](https://github.com/srswinde/indi_webclient/blob/master/docker-compose-vatt-guidebox.yml). 
+The docker container is run in docker-compose fashion so the INDI driver is bundled with the INDI webclient and the webserver. As it stands now both this INDI driver and the [vatt-guidebox](https://github.com/so-mops/vatt-guidebox) INDI drivers are run in the same docker-compose bundle. The docker-compose file can be found [here](https://github.com/srswinde/indi_webclient/blob/master/docker-compose-vatt-guidebox.yml). 
+
+To have the docker-compose file run on startup we build a systemd service. This process is described in the [indi_webclient readme](https://github.com/srswinde/indi_webclient/blob/master/README.md). 
