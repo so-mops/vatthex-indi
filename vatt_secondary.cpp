@@ -1206,7 +1206,8 @@ int Secondary::GetTempAndEl()
 	}
 	
 	//if the read temp is reasonable
-	if( dummy_temp > -17.0 && dummy_temp < 17.0 )
+  // Changing the range to +/- 30 so that it does not jump
+	if( dummy_temp > -30.0 && dummy_temp < 30.0 )
 	{
 		if (gettingTemp)
 		{
@@ -1222,9 +1223,10 @@ int Secondary::GetTempAndEl()
 	}
 
 	//if not reasonable
+  // Changing the range to +/- 30 so that it does not jump
 	else
 	{//use the users temperature if its reasonable
-		if(TempElN[0].value > -17.0 && TempElN[0].value < 17.0)
+		if(TempElN[0].value > -30.0 && TempElN[0].value < 30.0)
 			temp = TempElN[0].value;
 	}
 
