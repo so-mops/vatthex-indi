@@ -2,6 +2,11 @@
 
 This is the repository for the VATT hexapod source code. It runs the PI hexapod that positions the VATT secondary mirror.
 
+## Undockerized
+This does not use docker anymore. Simply make the build and the indiserver launcher on desktop runs it on port 7600
+
+*Back to the README.*
+_______
 
 ## Build
 
