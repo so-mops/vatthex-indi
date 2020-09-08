@@ -6,12 +6,17 @@ sdev:
 
 install: sdev
 	cp sdev /usr/local/bin/VATTHEX-INDI
-	cp systemd/VATTHEX-INDI.service /etc/systemd/system
-	cp startindi.sh /usr/local/bin/startindi
-	chmod a+x /usr/local/bin/startindi
-	chmod 664 /etc/systemd/system/VATTHEX-INDI.service
-	systemctl daemon-reload
-	systemctl enable VATTHEX-INDI.service
+	# START FIX
+	# 09-08-2020
+	# Dan Avner
+	# Commented out the lines below since docker is no longer in use
+	#cp systemd/VATTHEX-INDI.service /etc/systemd/system
+	#cp startindi.sh /usr/local/bin/startindi
+	#chmod a+x /usr/local/bin/startindi
+	#chmod 664 /etc/systemd/system/VATTHEX-INDI.service
+	#systemctl daemon-reload
+	#systemctl enable VATTHEX-INDI.service
+	# END FIX
 
 clean:
 	rm -f sdev
