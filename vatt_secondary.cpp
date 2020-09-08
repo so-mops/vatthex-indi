@@ -767,16 +767,32 @@ bool Secondary::fill()
 	const char miscgrp[] = "Miscellaneous";
 	const char tegroup[] = "Temp El";
 			
+  /* START FIX
+  09-08-2020
+  
+  It was asked by Paul Gabor to swap the labels for the Linear Position
+  Y and Linear Position X. I am commenting out the previous code and
+  injecting the new change. 
 
+  DA
+   */
 	//X axis for corrections is Y axis of PI hexapod
-	IUFillNumber(&PosLatN_X[0] , "Y", "X Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
-	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
+	//IUFillNumber(&PosLatN_X[0] , "Y", "X Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
+	//IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
+  IUFillNumber(&PosLatN_X[0] , "X", "X Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
+	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_X );
 	
 	//Y axis for corrections (auto collimation) is X axis of PI Hexapod
-	IUFillNumber(&PosLatN_Y[0] , "X", "Y Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
-	IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
+	//IUFillNumber(&PosLatN_Y[0] , "X", "Y Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
+	//IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
+  IUFillNumber(&PosLatN_Y[0] , "Y", "Y Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
+	IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
 	defineNumber( &PosLatNV_Y );
+  /* END FIX
+
+  Dan Avner
+   */
 
 	IUFillNumber(&PosLatN_Z[0] , "Z", "Focus ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_Z,  PosLatN_Z, 1, getDeviceName(), "PosZ", "Linear Position Z", linposgrp, IP_RW, 0.5, IPS_IDLE );
