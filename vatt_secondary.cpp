@@ -11,7 +11,6 @@
 #include "ngclient.h"
 #include <unistd.h>
 
-
 #define REFRESH  1000 //refresh time in milliseconds
 
 
@@ -30,7 +29,19 @@
  * we are running in docker container so for 
  * now this will suffice. 
  * */
-#define PFILENAME "/data/posfile.dat"
+
+/* 
+Use this for getting the user home directory
+Will test this out after verifying the hardcode option works
+Requires pwd.h and string
+string homedir = getenv("HOME");
+string config_path = "/.mtnops/posfile.dat"
+if (homedir == NULL) {
+    homedir = getpwuid(getuid()) -> pw_dir;
+} 
+*/
+
+#define PFILENAME "/home/vattobs/.mtnops/posfile.dat"
 std::unique_ptr<Secondary> secondary(new Secondary());
 
 
