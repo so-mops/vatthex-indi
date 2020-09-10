@@ -58,6 +58,6 @@ install:
 # END FIX
 
 clean:
-	rm -f *.o *.so VATTHEX-INDI
+	rm -f *.o *.so VATTHEX-INDI hextest
 
 
