@@ -5,7 +5,7 @@ SDEV_OBJS = vatt_secondary.o vatttel_com.o ngclient.o
 VATTHEX-INDI-OBJS = vatthex.o vatt_secondary.o vatttel_com.o ngclient.o
 LIBVATTHEX_OBJS = vatthex.o
 ###############binaries##################
-all: clean libvatthex.so hextest VATTHEX-INDI VATTHEX-INDI-2
+all: clean libvatthex.so hextest VATTHEX-INDI
 
 
 sdev:
