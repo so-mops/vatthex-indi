@@ -1,11 +1,50 @@
+#########################################
+# makefile for vatthex_indi	  	#
+################objects##################
+SDEV_OBJS = vatt_secondary.o vatttel_com.o ngclient.o
+VATTHEX-INDI-OBJS = vatthex.o vatt_secondary.o vatttel_com.o ngclient.o
+LIBVATTHEX_OBJS = vatthex.o
+###############binaries##################
+all: clean libvatthex.so hextest VATTHEX-INDI VATTHEX-INDI-2
 
-all: clean sdev
 
 sdev:
 	g++ -std=c++11 vatt_secondary.cpp vatttel_com.c ngclient.c -I/usr/include/libindi -Ilibvatthex/include -I/usr/local/include/PI -lindidriver -lnova -lpthread -lz -o sdev -L/usr/local/lib -lpi_pi_gcs2 -lvatthex
 
-install: sdev
-	cp sdev /usr/local/bin/VATTHEX-INDI
+VATTHEX-INDI:  $(SDEV_OBJS)
+	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI -L/usr/local/lib -lpi_pi_gcs2 -lvatthex
+
+VATTHEX-INDI-2:  $(SDEV_OBJS)
+	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI -L/usr/local/lib -lpi_pi_gcs2 
+
+
+vatt_secondary.o: vatt_secondary.cpp
+	g++ -std=c++11 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -I/usr/local/include/PI
+
+vatttel_com.o: vatttel_com.c
+	g++ -std=c++11 -c vatttel_com.c
+
+ngclient.o: ngclient.c
+	g++ -c ngclient.c
+
+vatthex.o: vatthex.c
+	gcc -c -fPIC vatthex.c -IPI
+
+libvatthex.so: $(LIBVATTHEX_OBJS)
+	gcc -shared $^ -IPI -o libvatthex.so
+
+hextest:
+	gcc test.c -o hextest -I./PI/include -Llib -lvatthex -lpi_pi_gcs2
+
+###############Utilities################
+install: 
+	#cp VATTHEX-INDI /usr/local/bin/.
+	cp PI/libpi_pi_gcs2.so.3.9.0 /usr/local/lib/libpi_pi_gcs2.so
+	cp PI/libpi_pi_gcs2-3.9.0.a /usr/local/lib/libpi_pi_gcs2.a
+	cp libvatthex.so /usr/local/lib/.
+	#cp vatthex.h /usr/local/include/.
+	ldconfig
+ 
 # START FIX
 # 09-08-2020
 # Dan Avner
@@ -19,6 +58,6 @@ install: sdev
 # END FIX
 
 clean:
-	rm -f sdev
+	rm -f *.o *.so VATTHEX-INDI
 
 

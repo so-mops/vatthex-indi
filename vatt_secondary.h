@@ -9,7 +9,7 @@
 extern "C" {
 #include "PI_GCS2_DLL.h"
 
-#include <vatthex.h> 
+#include "vatthex.h" 
 }
 class indiNVP
 {
