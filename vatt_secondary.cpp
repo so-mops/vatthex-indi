@@ -1249,9 +1249,8 @@ int Secondary::GetTempAndEl()
 	double dummy_el;
 	bool badread = true;
 
-  IDMessage(getDeviceName(), "%s", rqstr);
 
-	size_t str_begin = rqstr.find( " ", 8);
+	size_t str_begin = rqstr.find( " ", 40);
   dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
   IDMessage(getDeviceName(), "TESTING RESPONSE 1: %lf", dummy_el);
 
