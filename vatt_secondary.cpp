@@ -947,6 +947,7 @@ void Secondary::TimerHit()
           // Dan Avner
           // Writing to file here
           // Need to write ii el temp CorrNextPos[ii].pos CorrPos[ii].pos
+          IDMessage(getDeviceName(), "Applying corrections - Dan");
           if ( access(CORRFILENAME, F_OK) != -1) {
             corrfile = fopen( CORRFILENAME, "a");
 			
@@ -957,10 +958,14 @@ void Secondary::TimerHit()
               CorrNextPos[ii].pos, 
               CorrPos[ii].pos);
 
+            IDMessage(getDeviceName(), "Reading correction file %i - Dan", fail);
             fclose(corrfile);
             // End changes
           }
-          
+          else {
+            IDMessage(getDeviceName(), "Error getting corrections file - Dan");
+          }
+
 
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
