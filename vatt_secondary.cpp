@@ -950,7 +950,7 @@ void Secondary::TimerHit()
           if ( access(CORRFILENAME, F_OK) != -1) {
             corrfile = fopen( CORRFILENAME, "a");
 			
-            int fail = fprintf(corrfile, "%lf %lf %lf %lf %lf\n", 
+            int fail = fprintf(corrfile, "%i %lf %lf %lf %lf\n", 
               ii, 
               el, 
               temp, 
@@ -960,6 +960,7 @@ void Secondary::TimerHit()
             fclose(corrfile);
             // End changes
           }
+          
 
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
