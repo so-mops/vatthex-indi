@@ -1271,6 +1271,7 @@ int Secondary::GetTempAndEl()
 	{
 		if (gettingTemp)
 		{
+      IDMessage(getDeviceName(), "TEMP GOOD");
 			temp = dummy_temp;
 			badread = false;
 
@@ -1286,6 +1287,7 @@ int Secondary::GetTempAndEl()
   // Changing the range to +/- 30 so that it does not jump
 	else
 	{//use the users temperature if its reasonable
+    IDMessage(getDeviceName(), "TEMP BAD");
 		if(TempElN[0].value > -30.0 && TempElN[0].value < 30.0)
 			temp = TempElN[0].value;
 	}
@@ -1296,12 +1298,14 @@ int Secondary::GetTempAndEl()
 		el = dummy_el;
 		TempElN[1].value=el*180/3.14159;
 		IDSetNumber(&TempElNV, NULL);
+    IDMessage(getDeviceName(), "ELEVATION GOOD");
 		
 
 		badread = false;
 	}
 	else
 	{
+    IDMessage(getDeviceName(), "ELEVATION BAD");
 		//read the old value or 
 		// the user input. 
 		el = TempElN[1].value;
