@@ -5,15 +5,15 @@ OLD_OBJS = vatt_secondary.o vatttel_com.o ngclient.o
 VATTHEX-INDI-OBJS = vatthex.o vatt_secondary.o vatttel_com.o ngclient.o
 LIBVATTHEX_OBJS = vatthex.o
 ###############binaries##################
-all: clean hextest VATTHEX-INDI 
+all: clean hextest indi-vatt-pihex 
 
 all-old: libvatthex.so VATTHEX-INDI-old 
 
 VATTHEX-INDI-old:  $(OLD_OBJS)
 	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI-old -L/usr/local/lib -lpi_pi_gcs2 -lvatthex
 
-VATTHEX-INDI:  $(VATTHEX-INDI-OBJS)
-	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI -L/usr/local/lib -lpi_pi_gcs2 
+indi-vatt-pihex:  $(VATTHEX-INDI-OBJS)
+	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o indi-vatt-pihex -L/usr/local/lib -lpi_pi_gcs2 
 
 vatt_secondary.o: vatt_secondary.cpp
 	g++ -std=c++11 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -I/usr/local/include/PI
@@ -57,6 +57,6 @@ install:
 # END FIX
 
 clean:
-	rm -f *.o libvatthex.so VATTHEX-INDI hextest VATTHEX-INDI-old
+	rm -f *.o libvatthex.so indi-vatt-pihex hextest VATTHEX-INDI-old
 
 
