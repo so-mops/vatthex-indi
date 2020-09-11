@@ -4,6 +4,8 @@
 //int  SERVER_PORT   =  5750;
 
 /*****************************************************/
-extern "C" int ng_request(char *input, char *output);
-extern "C" int ng_command(char *input, char *output);
+//extern "C" int ng_request(char *input, char *output);
+//extern "C" int ng_command(char *input, char *output);
+int ng_request(char *input, char *output);
+int ng_command(char *input, char *output);
 #endif

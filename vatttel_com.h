@@ -11,7 +11,9 @@
 #define VATT_CMD_STATUS_SECONDARY1   (0x0a13)
 
 
-extern "C" double GetStrutTemp(char *);
+//extern "C" double GetStrutTemp(char *);
+double GetStrutTemp(char *);
 
-extern "C" double GetAlt(char *);
+//extern "C" double GetAlt(char *);
+double GetAlt(char *);
 

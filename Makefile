@@ -19,10 +19,12 @@ vatt_secondary.o: vatt_secondary.cpp
 	g++ -std=c++11 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -I/usr/local/include/PI
 
 vatttel_com.o: vatttel_com.c
-	g++ -std=c++11 -c vatttel_com.c
+	gcc -c vatttel_com.c
+#g++ -std=c++11 -c vatttel_com.c
 
 ngclient.o: ngclient.c
-	g++ -c ngclient.c
+	gcc -c ngclient.c 
+#g++ -c ngclient.c
 
 vatthex.o: vatthex.c
 	gcc -c -fPIC vatthex.c -IPI

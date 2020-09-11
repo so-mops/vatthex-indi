@@ -7,8 +7,8 @@
 
 #include <memory>
 #include <cmath>
-#include "vatttel_com.h"
-#include "ngclient.h"
+//#include "vatttel_com.h"
+//#include "ngclient.h"
 #include <unistd.h>
 #include <time.h>
 
