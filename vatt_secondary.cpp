@@ -42,6 +42,7 @@ if (homedir == NULL) {
 */
 
 #define PFILENAME "/home/vattobs/.mtnops/posfile.dat"
+#define CORRFILENAME "/home/vattobs/.mtnops/corrfile.dat"
 std::unique_ptr<Secondary> secondary(new Secondary());
 
 
@@ -942,6 +943,22 @@ void Secondary::TimerHit()
 				//we have veered too far from the correct position... lets move
 				if( fabs( CorrNextPos[ii].pos - CorrPos[ii].pos ) > 0.0001 )
 				{
+          // 09-10-2020
+          // Dan Avner
+          // Writing to file here
+          // Need to write ii el temp CorrNextPos[ii].pos CorrPos[ii].pos
+          corrfile = fopen( CORRFILENAME, "a");
+			
+          int fail = fprintf(corrfile, "%lf %lf %lf %lf %lf\n", 
+            ii, 
+            el, 
+            temp, 
+            CorrNextPos[ii].pos, 
+            CorrPos[ii].pos);
+
+          fclose(corrfile);
+          // End changes
+
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
 					if(axisMoveState == false)
