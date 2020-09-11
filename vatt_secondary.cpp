@@ -1250,8 +1250,11 @@ int Secondary::GetTempAndEl()
 	bool badread = true;
 
 	size_t str_begin = rqstr.find( " ", 5);
+  dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
+  IDMessage(getDeviceName(), "TESTING RESPONSE 1: %lf", dummy_el);
+
 	dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) )*3.14159/180.0;
-  IDMessage(getDeviceName(), "TESTING RESPONSE: %lf", dummy_el);
+  IDMessage(getDeviceName(), "TESTING RESPONSE 2: %lf", dummy_el);
 
 
 	//only grab the temp every 120 seconds
