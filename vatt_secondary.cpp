@@ -41,9 +41,10 @@ if (homedir == NULL) {
     homedir = getpwuid(getuid()) -> pw_dir;
 } 
 */
-
+// TODO remove hardcoding
 #define PFILENAME "/home/vattobs/.mtnops/posfile.dat"
-#define CORRFILENAME "/home/vattobs/.mtnops/corrfile.dat"
+#define CORRFILENAME "/home/vattobs/.mtnops/corrections.log"
+
 std::unique_ptr<Secondary> secondary(new Secondary());
 
 
@@ -312,10 +313,17 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	
 	
-	for(int ii=0; ii<n; ii++)
+	/* 
+  09-11-2020
+  Dan Avner
+  The interior of the for loop below was commented out, so it was just an empty
+  for loop running. We should no longer need the for loop.
+
+  for(int ii=0; ii<n; ii++)
 	{
-		//IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
-	}
+		IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
+	} 
+  */
 	IUUpdateNumber(myv, values, names, n);
 	return true;
 
@@ -948,32 +956,24 @@ void Secondary::TimerHit()
           // Dan Avner
           // Writing to file here
           // Need to write ii el temp CorrNextPos[ii].pos CorrPos[ii].pos
-          IDMessage(getDeviceName(), "Applying corrections - Dan");
-          if ( access(CORRFILENAME, F_OK) != -1) {
-            corrfile = fopen( CORRFILENAME, "a");
-            time_t rawtime;
-            struct tm * timeinfo;
-            time(&rawtime);
-            timeinfo = localtime(&rawtime);
-            char buffer[26];
-            strftime(buffer, 26, "%H:%M:%S", timeinfo);
-			
-            int fail = fprintf(corrfile, "%s\t%i\t%lf\t%lf\t%lf\t%lf\n", 
-              buffer,
-              ii, 
-              el, 
-              temp, 
-              CorrNextPos[ii].pos, 
-              CorrPos[ii].pos);
+          IDMessage(getDeviceName(), "Applying correction for autocollimation");
+          corrfile = fopen(CORRFILENAME, "a");
+          time_t rawtime;
+          struct tm * timeinfo;
+          time(&rawtime);
+          timeinfo = localtime(&rawtime);
+          char buffer[26];
+          strftime(buffer, 26, "%F %H:%M:%S", timeinfo);
+    
+          fprintf(corrfile, "%s\t%i\t%lf\t%lf\t%lf\t%lf\n", 
+            buffer,
+            ii, 
+            el, 
+            temp, 
+            CorrNextPos[ii].pos, 
+            CorrPos[ii].pos);
 
-            IDMessage(getDeviceName(), "Reading correction file %i - Dan", fail);
-            fclose(corrfile);
-            // End changes
-          }
-          else {
-            IDMessage(getDeviceName(), "Error getting corrections file - Dan");
-          }
-
+          fclose(corrfile);
 
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
@@ -981,7 +981,7 @@ void Secondary::TimerHit()
 					{
 						corrS[0].s = ISS_OFF;
 						corrSV.s = IPS_IDLE;
-						//delete the posfile in case that is what is causing the troubel
+						//delete the posfile in case that is what is causing the trouble
 						remove(PFILENAME);
 						IDSetSwitch(&corrSV, NULL);
 
@@ -1216,8 +1216,8 @@ int Secondary::GetTempAndEl()
 
 	try
 	{
+    // Gets the whole return from telescope
 		ii=ng_request( (char *) "ALL ", rqbuff );
-		//IDMessage(getDeviceName(), "retn code is %i, rqbuff was '%s'", ii, rqbuff);
 	}
 	catch(const std::exception& e)
 	{
@@ -1226,7 +1226,6 @@ int Secondary::GetTempAndEl()
 		corrSV.s = IPS_IDLE;
 		IDSetSwitch( &corrSV, "No communication with vatttel, turning off autocollimation");
 		return -1; 
-		//strcpy( rqbuff, "VATT TCS 123 12:34:56 +78:91:12  23:34:45 81.0, 85.0  ...  "  );
 	}
 
 	if(strcmp(rqbuff, "") == 0)
@@ -1252,15 +1251,11 @@ int Secondary::GetTempAndEl()
 
 	size_t str_begin = rqstr.find( " ", 40);
   dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
+  // Fix to correct for telescope returning anything larger than 90.0 elevation
   if (dummy_el > 90.0) {
-    dummy_el = 89.9999999;
+    dummy_el = 89.9999;
   }
-  IDMessage(getDeviceName(), "TESTING RESPONSE RAW: %lf", dummy_el);
-
   dummy_el *= (double)3.14159/180.0;
-  
-  IDMessage(getDeviceName(), "TESTING RESPONSE MODIFY: %lf", dummy_el);
-
 
 	//only grab the temp every 120 seconds
 	vatttel_counter++;
@@ -1281,7 +1276,7 @@ int Secondary::GetTempAndEl()
 	{
 		if (gettingTemp)
 		{
-      IDMessage(getDeviceName(), "TEMP GOOD");
+      IDMessage(getDeviceName(), "Temperature read was good");
 			temp = dummy_temp;
 			badread = false;
 
@@ -1297,7 +1292,7 @@ int Secondary::GetTempAndEl()
   // Changing the range to +/- 30 so that it does not jump
 	else
 	{//use the users temperature if its reasonable
-    IDMessage(getDeviceName(), "TEMP BAD");
+    IDMessage(getDeviceName(), "Temperature reading bad: %f", dummy_temp);
 		if(TempElN[0].value > -30.0 && TempElN[0].value < 30.0)
 			temp = TempElN[0].value;
 	}
@@ -1307,15 +1302,13 @@ int Secondary::GetTempAndEl()
 		//update el for autocollimation and user
 		el = dummy_el;
 		TempElN[1].value=el*180/3.14159;
-		IDSetNumber(&TempElNV, NULL);
-    IDMessage(getDeviceName(), "ELEVATION GOOD");
-		
+		IDSetNumber(&TempElNV, NULL);		
 
 		badread = false;
 	}
 	else
 	{
-    IDMessage(getDeviceName(), "ELEVATION BAD");
+    IDMessage(getDeviceName(), "Elevation reading bad: %f", dummy_el);
 		//read the old value or 
 		// the user input. 
 		el = TempElN[1].value;
