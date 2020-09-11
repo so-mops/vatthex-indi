@@ -1252,9 +1252,13 @@ int Secondary::GetTempAndEl()
 
 	size_t str_begin = rqstr.find( " ", 40);
   dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
+  if (dummy_el > 90.0) {
+    dummy_el = 89.9999999;
+  }
   IDMessage(getDeviceName(), "TESTING RESPONSE RAW: %lf", dummy_el);
-	dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
+
   dummy_el *= (double)3.14159/180.0;
+  
   IDMessage(getDeviceName(), "TESTING RESPONSE MODIFY: %lf", dummy_el);
 
 
