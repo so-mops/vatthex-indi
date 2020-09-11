@@ -5,7 +5,7 @@ SDEV_OBJS = vatt_secondary.o vatttel_com.o ngclient.o
 VATTHEX-INDI-OBJS = vatthex.o vatt_secondary.o vatttel_com.o ngclient.o
 LIBVATTHEX_OBJS = vatthex.o
 ###############binaries##################
-all: clean libvatthex.so hextest VATTHEX-INDI
+all: clean libvatthex.so hextest VATTHEX-INDI VATTHEX-INDI-2
 
 
 sdev:
@@ -14,8 +14,8 @@ sdev:
 VATTHEX-INDI:  $(SDEV_OBJS)
 	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI -L/usr/local/lib -lpi_pi_gcs2 -lvatthex
 
-VATTHEX-INDI-2:  $(SDEV_OBJS)
-	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI -L/usr/local/lib -lpi_pi_gcs2 
+VATTHEX-INDI-2:  $(VATTHEX-INDI-OBJS)
+	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI-2 -L/usr/local/lib -lpi_pi_gcs2 
 
 
 vatt_secondary.o: vatt_secondary.cpp
@@ -58,6 +58,6 @@ install:
 # END FIX
 
 clean:
-	rm -f *.o *.so VATTHEX-INDI hextest
+	rm -f *.o *.so VATTHEX-INDI VATTHEX-INDI-2 hextest
 
 
