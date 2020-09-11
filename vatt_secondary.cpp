@@ -947,7 +947,7 @@ void Secondary::TimerHit()
           // Dan Avner
           // Writing to file here
           // Need to write ii el temp CorrNextPos[ii].pos CorrPos[ii].pos
-          if ( access(PFILENAME, F_OK) != -1) {
+          if ( access(CORRFILENAME, F_OK) != -1) {
             corrfile = fopen( CORRFILENAME, "a");
 			
             int fail = fprintf(corrfile, "%lf %lf %lf %lf %lf\n", 
