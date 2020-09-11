@@ -1254,7 +1254,7 @@ int Secondary::GetTempAndEl()
   dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
   IDMessage(getDeviceName(), "TESTING RESPONSE RAW: %lf", dummy_el);
 	dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
-  dummy_el *= 3.14159/180.0
+  dummy_el *= 3.14159/180.0;
   IDMessage(getDeviceName(), "TESTING RESPONSE MODIFY: %lf", dummy_el);
 
 
