@@ -947,17 +947,19 @@ void Secondary::TimerHit()
           // Dan Avner
           // Writing to file here
           // Need to write ii el temp CorrNextPos[ii].pos CorrPos[ii].pos
-          corrfile = fopen( CORRFILENAME, "a");
+          if ( access(PFILENAME, F_OK) != -1) {
+            corrfile = fopen( CORRFILENAME, "a");
 			
-          int fail = fprintf(corrfile, "%lf %lf %lf %lf %lf\n", 
-            ii, 
-            el, 
-            temp, 
-            CorrNextPos[ii].pos, 
-            CorrPos[ii].pos);
+            int fail = fprintf(corrfile, "%lf %lf %lf %lf %lf\n", 
+              ii, 
+              el, 
+              temp, 
+              CorrNextPos[ii].pos, 
+              CorrPos[ii].pos);
 
-          fclose(corrfile);
-          // End changes
+            fclose(corrfile);
+            // End changes
+          }
 
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
