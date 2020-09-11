@@ -10,6 +10,7 @@
 #include "vatttel_com.h"
 #include "ngclient.h"
 #include <unistd.h>
+#include <time.h>
 
 #define REFRESH  1000 //refresh time in milliseconds
 
@@ -950,8 +951,15 @@ void Secondary::TimerHit()
           IDMessage(getDeviceName(), "Applying corrections - Dan");
           if ( access(CORRFILENAME, F_OK) != -1) {
             corrfile = fopen( CORRFILENAME, "a");
+            time_t rawtime;
+            struct tm * timeinfo;
+            time(&rawtime);
+            timeinfo = localtime(&rawtime);
+            char buffer[26];
+            strftime(buffer, 26, "%H:%M:%S", timeinfo);
 			
-            int fail = fprintf(corrfile, "%i %lf %lf %lf %lf\n", 
+            int fail = fprintf(corrfile, "%s\t%i\t%lf\t%lf\t%lf\t%lf\n", 
+              buffer,
               ii, 
               el, 
               temp, 

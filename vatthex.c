@@ -157,9 +157,9 @@ BOOL correct( Axis xp[], double el, double temp )
 {
 	double eltemp[4] = { temp, cos(el), temp, cos(el) };
 
-	
 	for(int ii=0; ii<6; ii++)
 	{
+
 		for(int cc=0; cc<4; cc++)
 		{
 
