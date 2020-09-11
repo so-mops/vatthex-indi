@@ -1249,8 +1249,10 @@ int Secondary::GetTempAndEl()
 	double dummy_el;
 	bool badread = true;
 
-	size_t str_begin = rqstr.find( " ", 40 );
+	size_t str_begin = rqstr.find( " ", 5);
 	dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) )*3.14159/180.0;
+  IDMessage(getDeviceName(), "TESTING RESPONSE: %lf", dummy_el);
+
 
 	//only grab the temp every 120 seconds
 	vatttel_counter++;
