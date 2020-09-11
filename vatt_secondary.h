@@ -62,6 +62,7 @@ class Secondary : public INDI::DefaultDevice
 	Axis ZeroPos[6];
 
 	FILE *posfile;
+  FILE *corrfile;
 	//hex positions
 	INumberVectorProperty PosLatNV_X;
 	INumber PosLatN_X[1];
