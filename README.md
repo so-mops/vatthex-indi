@@ -35,6 +35,8 @@ vatt_secondary.cpp/.h: this is the meat of the software.  This has all the algor
 
 test.c: This is a set of command line tools to test the PI hexapod.
 
+PI/libpi_pi_gcs2-3.9.0.a, PI/libpi_pi_gcs2.so.3.9.0, PI/PI_GCS2_DLL.h:  these are the PI supplied libs and header
+
 
 ## Old Docker Info [unused, kept for historical reasons]
 Because of the portability issues with INDI, it is currently run in a [docker container](https://hub.docker.com/r/srswinde/indihex). This container can be built with [build.sh](https://github.com/so-mops/vatthex-indi/blob/master/build.sh). Building the dockerfile will also make the indidriver and build all the 
