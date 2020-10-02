@@ -224,7 +224,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	INumberVectorProperty * myv = getNumber(name);
 	if( strcmp( name, "PosX" ) == 0 )
 	{
-		
+		// TODO get this info into a log
 		NextPos[XX].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -974,7 +974,7 @@ void Secondary::TimerHit()
             CorrPos[ii].pos);
 
           fclose(corrfile);
-
+          printf(&CorrNextPos[ii]);
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
 					if(axisMoveState == false)
