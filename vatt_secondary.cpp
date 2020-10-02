@@ -115,6 +115,7 @@ Secondary::Secondary()
 
 	ZeroPos[VV].pos = 40/DEG2ASEC;
 	ZeroPos[UU].pos = -60/DEG2ASEC;
+  // Logging WW is not useful as its the rotational 
 	ZeroPos[WW].pos = 0;
 }
 
