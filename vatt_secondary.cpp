@@ -965,7 +965,7 @@ void Secondary::TimerHit()
           char buffer[26];
           strftime(buffer, 26, "%F %H:%M:%S", timeinfo);
     
-          fprintf(corrfile, "%s\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%i\t%lf\t%lf\t%lf\n", 
+          fprintf(corrfile, "%s\t%lf\t%lf\t%lf\t%lf\t%lf\t%i\t%lf\t%lf\t%lf\n", 
             buffer,
             NextPos[XX].pos,
             NextPos[YY].pos,
