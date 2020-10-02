@@ -965,14 +965,17 @@ void Secondary::TimerHit()
           char buffer[26];
           strftime(buffer, 26, "%F %H:%M:%S", timeinfo);
     
-          fprintf(corrfile, "%s\t%i\t%lf\t%lf\t%lf\t%lf\t%lf\n", 
+          fprintf(corrfile, "%s\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%i\t%lf\t%lf\t%lf\n", 
             buffer,
+            NextPos[XX].pos,
+            NextPos[YY].pos,
+            NextPos[ZZ].pos,
+            NextPos[VV].pos,
+            NextPos[UU].pos,
             ii, 
             el, 
             temp, 
-            CorrNextPos[ii].pos, 
-            CorrPos[ii].pos,
-            NextPos[ii].pos);
+            CorrNextPos[ii].pos);
 
           fclose(corrfile);
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
