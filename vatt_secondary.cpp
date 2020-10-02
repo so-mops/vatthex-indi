@@ -944,7 +944,7 @@ void Secondary::TimerHit()
 		//update the position
 		if(!isMoving)
 		{
-      printf("%lf", NextPos)
+      printf("%lf", NextPos);
 			deepcopy(CorrNextPos, NextPos);
 			correct(CorrNextPos, el, temp);
 			for(int ii=0; ii<6; ii++)
@@ -966,7 +966,7 @@ void Secondary::TimerHit()
           char buffer[26];
           strftime(buffer, 26, "%F %H:%M:%S", timeinfo);
     
-          fprintf(corrfile, "%s\t%i\t%lf\t%lf\t%lf\t%lf%\n", 
+          fprintf(corrfile, "%s\t%i\t%lf\t%lf\t%lf\t%lf\n", 
             buffer,
             ii, 
             el, 
