@@ -974,7 +974,7 @@ void Secondary::TimerHit()
             CorrPos[ii].pos);
 
           fclose(corrfile);
-          printf(&CorrNextPos[ii]);
+          printf("%s", &CorrNextPos[ii]);
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
 					if(axisMoveState == false)
@@ -1029,7 +1029,6 @@ void Secondary::TimerHit()
 		name[3] = iter->letter[0];
 		
 		IAxis = getNumber( name );
-    printf(getNumber);
 		IAxis->np->value = iter->pos*unitconversion;
 		IDSetNumber( IAxis, NULL );
 	}
