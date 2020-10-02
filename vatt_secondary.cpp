@@ -974,7 +974,6 @@ void Secondary::TimerHit()
             CorrPos[ii].pos);
 
           fclose(corrfile);
-          printf("%s", &CorrNextPos[ii]);
 					axisMoveState = _MoveOneAxis( &CorrNextPos[ii] );
 
 					if(axisMoveState == false)

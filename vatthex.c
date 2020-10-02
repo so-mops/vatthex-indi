@@ -179,6 +179,7 @@ BOOL uncorrect( Axis xp[], double el, double temp )
 		for(int cc=0; cc<4; cc++)
 		{
 			xp[ii].pos -= sec_c2m[ii][cc]*eltemp[cc]*MICRONS2MM;
+      printf("%s", xp[ii]);
 		}
 	}
 	return true;
