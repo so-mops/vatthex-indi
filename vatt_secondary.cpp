@@ -944,7 +944,6 @@ void Secondary::TimerHit()
 		//update the position
 		if(!isMoving)
 		{
-      printf("%lf", NextPos.pos);
 			deepcopy(CorrNextPos, NextPos);
 			correct(CorrNextPos, el, temp);
 			for(int ii=0; ii<6; ii++)
