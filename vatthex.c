@@ -162,7 +162,7 @@ BOOL correct( Axis xp[], double el, double temp )
 
 		for(int cc=0; cc<4; cc++)
 		{
-
+      printf(xp[ii]);
 			xp[ii].pos += sec_c2m[ii][cc]*eltemp[cc]*MICRONS2MM;
 		}
 	}
