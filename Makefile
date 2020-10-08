@@ -37,7 +37,7 @@ hextest:
 
 ###############Utilities################
 install: 
-	#cp VATTHEX-INDI /usr/local/bin/.
+	cp indi-vatt-pihex /usr/local/bin/.
 	cp PI/libpi_pi_gcs2.so.3.9.0 /usr/local/lib/libpi_pi_gcs2.so
 	cp PI/libpi_pi_gcs2-3.9.0.a /usr/local/lib/libpi_pi_gcs2.a
 	#cp libvatthex.so /usr/local/lib/.

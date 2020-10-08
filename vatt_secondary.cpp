@@ -435,7 +435,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			usleep(SLEEP_BTWN_CALLS);
 
 			//NextPos[ZZ].pos = -1750/MILLI2MICRON;
-			_MoveOneAxis( &NextPos[XX]);
+			_MoveOneAxis( &NextPos[ZZ]);
 
 			usleep(SLEEP_BTWN_CALLS);
 
