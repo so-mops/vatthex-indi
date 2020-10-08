@@ -226,7 +226,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	if( strcmp( name, "PosX" ) == 0 )
 	{
 		// TODO get this info into a log
-    IDMessage(getDeviceName(), "User input PosX: %i", values[0]);
+    IDMessage(getDeviceName(), "User input PosX: %lf", values[0]);
 		NextPos[XX].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -239,7 +239,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosY" ) == 0 )
 	{
-    IDMessage(getDeviceName(), "User input PosY: %i", values[0]);
+    IDMessage(getDeviceName(), "User input PosY: %lf", values[0]);
 		NextPos[YY].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -253,7 +253,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosZ" ) == 0 )
 	{
-    IDMessage(getDeviceName(), "User input PosZ: %i", values[0]);
+    IDMessage(getDeviceName(), "User input PosZ: %lf", values[0]);
 		NextPos[ZZ].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -269,7 +269,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosW" ) == 0 )
 	{
-    IDMessage(getDeviceName(), "User input PosW: %i", values[0]);
+    IDMessage(getDeviceName(), "User input PosW: %lf", values[0]);
 		NextPos[WW].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -284,7 +284,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosV" ) == 0 )
 	{
-    IDMessage(getDeviceName(), "User input PosV: %i", values[0]);
+    IDMessage(getDeviceName(), "User input PosV: %lf", values[0]);
 		NextPos[VV].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -299,7 +299,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosU" ) == 0 )
 	{
-    IDMessage(getDeviceName(), "User input PosU: %i", values[0]);
+    IDMessage(getDeviceName(), "User input PosU: %lf", values[0]);
 		NextPos[UU].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
