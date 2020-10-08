@@ -226,6 +226,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	if( strcmp( name, "PosX" ) == 0 )
 	{
 		// TODO get this info into a log
+    IDMessage(getDeviceName(), "User input PosX: %i", values[0]);
 		NextPos[XX].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -238,6 +239,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosY" ) == 0 )
 	{
+    IDMessage(getDeviceName(), "User input PosY: %i", values[0]);
 		NextPos[YY].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -251,6 +253,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosZ" ) == 0 )
 	{
+    IDMessage(getDeviceName(), "User input PosZ: %i", values[0]);
 		NextPos[ZZ].pos = values[0]/MILLI2MICRON;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -266,6 +269,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosW" ) == 0 )
 	{
+    IDMessage(getDeviceName(), "User input PosW: %i", values[0]);
 		NextPos[WW].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -280,6 +284,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosV" ) == 0 )
 	{
+    IDMessage(getDeviceName(), "User input PosV: %i", values[0]);
 		NextPos[VV].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -294,6 +299,7 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 	}
 	if( strcmp(name, "PosU" ) == 0 )
 	{
+    IDMessage(getDeviceName(), "User input PosU: %i", values[0]);
 		NextPos[UU].pos = values[0]/DEG2ASEC;
 		deepcopy( CorrNextPos, NextPos );
 		correct( CorrNextPos, el, temp );
@@ -313,18 +319,6 @@ bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], 
 		IDSetNumber(&TempElNV, "Setting Temp or El from user %f %f", values[0], values[1]);
 	}
 	
-	
-	/* 
-  09-11-2020
-  Dan Avner
-  The interior of the for loop below was commented out, so it was just an empty
-  for loop running. We should no longer need the for loop.
-
-  for(int ii=0; ii<n; ii++)
-	{
-		IDMessage(getDeviceName(), "dev=%s, name=%s, names[%i]=%s, values[%i]=%f\n", dev, name, ii, names[ii], ii, values[ii] );
-	} 
-  */
 	IUUpdateNumber(myv, values, names, n);
 	return true;
 
@@ -472,7 +466,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 			
 			
 			posfile = fopen( PFILENAME, "w");
-			
+			IDMessage(getDeviceName(), "Writing posfile.dat");
 			int fail = fprintf(posfile, "%lf %lf %lf %lf %lf", 
 				NextPos[XX].pos, 
 				NextPos[YY].pos, 
@@ -986,6 +980,7 @@ void Secondary::TimerHit()
 						corrS[0].s = ISS_OFF;
 						corrSV.s = IPS_IDLE;
 						//delete the posfile in case that is what is causing the trouble
+            IDMessage(getDeviceName(), "Deleting posfile.dat");
 						remove(PFILENAME);
 						IDSetSwitch(&corrSV, NULL);
 
@@ -1304,6 +1299,7 @@ int Secondary::GetTempAndEl()
 	if( dummy_el >0 && dummy_el < 3.14159/2.0 + 0.1*3.14159/180 )
 	{//if read_el is resonable
 		//update el for autocollimation and user
+    IDMessage(getDeviceName(), "Elevation read was good");
 		el = dummy_el;
 		TempElN[1].value=el*180/3.14159;
 		IDSetNumber(&TempElNV, NULL);		
