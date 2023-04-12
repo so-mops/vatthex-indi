@@ -155,6 +155,12 @@ int GetError(int ID, char errBuff[], int buffSize )
 
 BOOL correct( Axis xp[], double el, double temp )
 {
+	//this temp value is here to short circuit the temperature correction.  To
+	//reactivate temperature corrections, comment out this line. This variable
+	//also exists in the uncorrect() function and must be fixed there also. 
+	//cj-5/2/2022
+	//temp = (double)0.0;
+
 	double eltemp[4] = { temp, cos(el), temp, cos(el) };
 
 	for(int ii=0; ii<6; ii++)
@@ -178,6 +184,12 @@ double loguncorrect(double pos, double el, double temp)
 
 BOOL uncorrect( Axis xp[], double el, double temp )
 {
+	//this temp value is here to short circuit the temperature correction.  To
+	//reactivate temperature corrections, comment out this line. this variable
+	//also exists in the correct() function and must be fixed there also. 
+	//cj-5/2/2022
+	//temp = (double)0.0;
+
 	double eltemp[4] = { temp, cos(el), temp, cos(el) };
 	for(int ii=0; ii<6; ii++)
 	{
