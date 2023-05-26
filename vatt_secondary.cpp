@@ -1262,7 +1262,10 @@ int Secondary::GetTempAndEl()
 	{
 		vatttel_counter=0;
 		gettingTemp=true;
-		dummy_temp = GetStrutTemp( temperr );
+		//temp from tcs
+		//dummy_temp = GetStrutTemp( temperr );
+		//temp from cbw
+		dummy_temp = GetStrutTempCBW( temperr );
 	}
 	else
 	{
