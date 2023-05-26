@@ -10,7 +10,8 @@ extern "C" {
 #include "PI_GCS2_DLL.h"
 #include "ngclient.h"
 #include "vatttel_com.h"
-#include "vatthex.h" 
+#include "vatthex.h"
+#include "readcbw.h" 
 }
 class indiNVP
 {
