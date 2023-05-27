@@ -33,6 +33,12 @@ vatthex.c/.h: this is the communication witht pi hexapod.  Its basically a wrapp
 
 vatt_secondary.cpp/.h: this is the meat of the software.  This has all the algorithms and the indi driver built in. 
 
+readcbw.d/.h: these are some routines to read temperatures from the Control by Web module.  replaces vatttel.c/.h
+
+testcbw.c: this is a small program that tests the readout of both CBW and TCS strut temps
+
+mjson.c/.h: a small library for parsing json in a c program
+
 test.c: This is a set of command line tools to test the PI hexapod.
 
 PI/libpi_pi_gcs2-3.9.0.a, PI/libpi_pi_gcs2.so.3.9.0, PI/PI_GCS2_DLL.h:  these are the PI supplied libs and header
