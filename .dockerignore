@@ -1,0 +1,9 @@
+.git
+*.o
+*.so
+*.a
+*.log
+*.working
+*.eof
+*.orig
+testprojectsoft
