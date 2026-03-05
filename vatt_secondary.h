@@ -7,11 +7,11 @@
 #include "defaultdevice.h"
 #include <string.h>
 extern "C" {
-#include "PI_GCS2_DLL.h"
-#include "ngclient.h"
-#include "vatttel_com.h"
-#include "vatthex.h"
-#include "readcbw.h" 
+#include "PI/PI_GCS2_DLL.h"
+//#include "ngclient.h"
+//#include "vatttel_com.h"
+#include "projectsoft.h"
+#include "vatthex.h" 
 }
 class indiNVP
 {
@@ -53,6 +53,7 @@ class Secondary : public INDI::DefaultDevice
 	bool connectionWentBad=false;
 	void SetIAxisState(IPState state);
 	int GetTempAndEl( );
+	int GetTempAndEl_old( );
 
 	void deepcopy(Axis *, Axis *);
 	

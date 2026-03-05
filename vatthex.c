@@ -54,9 +54,10 @@ https://lavinia.as.arizona.edu/~tscopewiki/doku.php?id=vatt:legacy_psuedo-hexpod
 
 double sec_c2m[M][C] = {
 //    FTC,   FLC,  CTC , CLC
-	{ 0.0  , 0.0  , 0.0 , 141.9   , }, //DECENX == X Microns
+	//{ 0.0  , 0.0  , 0.0 , 141.9   , }, //DECENX == X Microns
+	{ 0.0  , 0.0  , 0.0 , 0.0     , }, //DECENX == X Microns
 	{ 0.0  , 0.0  , 0.0 , 0.0     , }, //DECENY == Y Microns
-	{ 22.6 , 57.0 , 0.0 , 0.0     , }, //DECENZ == Z (Focus)
+	{ 27.6 , 57.0 , 0.0 , 0.0     , }, //DECENZ == Z (Focus)
 	{ 0.0  , 0.0  , 0.0 , 0.0     , }, //TIPX == W (Arcseconds)
 	{ 0.0  , 0.0  , 0.0 , 0.0     , }, //TIPY == V
 	{ 0.0  , 0.0  , 0.0 , 0.0     , }, //TIPZ == U

@@ -16,7 +16,7 @@
 
 
 //When to refresh Temerature from vatttel as a multiple of REFRESH time. 
-#define MAX_VATTTEL_CNT 120 
+#define MAX_VATTTEL_CNT 5
 #define SLEEP_BTWN_CALLS 1e4 //10 ms
 
 #define PI_PORTNUM 50000
@@ -156,6 +156,7 @@ bool Secondary::updateProperties()
 /**************************************************************************************
 ** Client is asking us to establish connection to the device
 ***************************************************************************************/
+/*
 bool Secondary::Connect()
 {
 
@@ -186,7 +187,49 @@ bool Secondary::Connect()
 
     return true;
 }
+*/
 
+bool Secondary::Connect()
+{
+    setConnected(true, IPS_BUSY, "Attempting to connect");
+
+    const char *ip = "10.0.3.10";
+    const int port = 50000;
+
+    IDMessage(getDeviceName(), "Attempting direct connect to %s:%d", ip, port);
+
+    ID = PI_ConnectTCPIP(ip, port);
+    if (ID < 0)
+    {
+        IDMessage(getDeviceName(), "PI_ConnectTCPIP failed (ID=%d)", ID);
+        setConnected(false, IPS_ALERT, "Connection failed");
+        return false;
+    }
+IDMessage(getDeviceName(), "PI_ConnectTCPIP (ID=%d)", ID);
+    char szIDN[200] = {0};
+    if (PI_qIDN(ID, szIDN, (int)sizeof(szIDN) - 1) == FALSE)
+    {
+        IDMessage(getDeviceName(), "PI_qIDN failed after connect; closing connection");
+        PI_CloseConnection(ID);
+        ID = -1;
+        setConnected(false, IPS_ALERT, "Controller did not respond");
+        return false;
+    }
+
+    IDMessage(getDeviceName(), "Connected: %s", szIDN);
+
+    _GetHexPos(Pos);
+    _GetHexPos(NextPos);
+
+    if (!isReferenced(Pos))
+    {
+        refSV.s = IPS_ALERT;
+        IDSetSwitch(&refSV, "You need to reference the secondary");
+    }
+
+    setConnected(true, IPS_OK, "Connected");
+    return true;
+}
 /**************************************************************************************
 ** Client is asking us to terminate connection to the device
 ***************************************************************************************/
@@ -222,7 +265,10 @@ const char *Secondary::getDefaultName()
 
 bool Secondary::ISNewNumber(const char *dev, const char *name, double values[], char *names[], int n)
 {
-	INumberVectorProperty * myv = getNumber(name);
+	// INumberVectorProperty * myv = getNumber(name);
+	// INDI::Property *myv = getProperty(name).getNumber();
+	INDI::PropertyViewNumber *myv = getProperty(name).getNumber();
+
 	if( strcmp( name, "PosX" ) == 0 )
 	{
 		// TODO get this info into a log
@@ -338,8 +384,10 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 {
 
 	DefaultDevice::ISNewSwitch(dev, name, states, names, n);
-	ISwitchVectorProperty *mysvp;
-	mysvp = getSwitch(name);
+	//ISwitchVectorProperty *mysvp;
+	//mysvp = getSwitch(name);
+	
+	INDI::PropertyViewSwitch *mysvp = getProperty(name).getSwitch();
 
 
 	IUUpdateSwitch(mysvp, states, names, n);
@@ -503,6 +551,7 @@ bool Secondary::ISNewSwitch(const char *dev, const char * name, ISState *states,
 		}
 
 	}
+return true;
 }
 
 bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char *names[], int n)
@@ -523,6 +572,7 @@ bool Secondary::ISNewText(const char *dev, const char *name, char *texts[], char
 		strcpy( HexAddrT[0].text, texts[0] );
 		IDSetText( &HexAddrTV, NULL );
 	}
+return true;
 }
 
 
@@ -708,6 +758,7 @@ bool Secondary::_GetHexPos(Axis *hexpos)
 * Scott Swindell 2017/11/29
 *
 *************************************************/
+/*
 bool Secondary::isConnected()
 {	
 	int isConned = true;
@@ -738,6 +789,37 @@ bool Secondary::isConnected()
 
 	}
 	return isConned;
+}
+*/
+
+bool Secondary::isConnected()
+{
+    if (!DefaultDevice::isConnected())
+        return false;
+
+    if (ID < 0)
+        return false;
+
+    char szIDN[200] = {0};
+    if (PI_qIDN(ID, szIDN, (int)sizeof(szIDN) - 1) == FALSE)
+    {
+        PI_CloseConnection(ID);
+        ID = -1;
+
+        corrS[0].s = ISS_OFF;
+        IDSetSwitch(&corrSV, NULL);
+
+        refS[0].s = ISS_OFF;
+        IDSetSwitch(&refSV, NULL);
+
+        setConnected(false, IPS_ALERT,
+                     "Could not communicate with the Secondary Controller, you may have to restart it.");
+        connectionWentBad = true;
+
+        return false;
+    }
+
+    return true;
 }
 
 bool Secondary::isReferenced(Axis xp[])
@@ -797,14 +879,14 @@ bool Secondary::fill()
 	//IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
   IUFillNumber(&PosLatN_X[0] , "X", "X Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_X,  PosLatN_X, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
-	defineNumber( &PosLatNV_X );
+	defineProperty( &PosLatNV_X );
 	
 	//Y axis for corrections (auto collimation) is X axis of PI Hexapod
 	//IUFillNumber(&PosLatN_Y[0] , "X", "Y Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	//IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosX", "Linear Position X", linposgrp, IP_RW, 0.5, IPS_IDLE );
   IUFillNumber(&PosLatN_Y[0] , "Y", "Y Axis ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_Y,  PosLatN_Y, 1, getDeviceName(), "PosY", "Linear Position Y", linposgrp, IP_RW, 0.5, IPS_IDLE );
-	defineNumber( &PosLatNV_Y );
+	defineProperty( &PosLatNV_Y );
   /* END FIX
 
   Dan Avner
@@ -812,57 +894,58 @@ bool Secondary::fill()
 
 	IUFillNumber(&PosLatN_Z[0] , "Z", "Focus ", "%5.0f", -5.0*MILLI2MICRON, 5.0*MILLI2MICRON, 1, 0);
 	IUFillNumberVector( &PosLatNV_Z,  PosLatN_Z, 1, getDeviceName(), "PosZ", "Linear Position Z", linposgrp, IP_RW, 0.5, IPS_IDLE );
-	defineNumber( &PosLatNV_Z );
+	defineProperty( &PosLatNV_Z );
 
 
 	/*rotational numbers*/
 	IUFillNumber(&PosRotN_W[0] , "W", "W Axis ", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_W,  PosRotN_W, 1, getDeviceName(), "PosW", "Rotational Position W", rotposgrp, IP_RW, 0.5, IPS_IDLE );
-	defineNumber( &PosRotNV_W );
+	defineProperty( &PosRotNV_W );
 
 
 	IUFillNumber(&PosRotN_V[0] , "V", "Tip X", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_V,  PosRotN_V, 1, getDeviceName(), "PosV", "Rotational Position V", rotposgrp, IP_RW, 0.5, IPS_IDLE );
-	defineNumber( &PosRotNV_V );
+	defineProperty( &PosRotNV_V );
 
 
 	IUFillNumber(&PosRotN_U[0] , "U", "Tip Y", "%5.0f", -2.5*DEG2ASEC, 2.5*DEG2ASEC, 1, 0);
 	IUFillNumberVector( &PosRotNV_U,  PosRotN_U, 1, getDeviceName(), "PosU", "Rotational Position U", rotposgrp, IP_RW, 0.5, IPS_IDLE );
-	defineNumber( &PosRotNV_U );
+	defineProperty( &PosRotNV_U );
 	
 	//These numbers were used for testing purposes. I am going to leave it in for future testing.
 	IUFillNumber(&TempElN[0] , "temp", "Strut Temp", "%4.1f", -20, 20, 0.1, 0);
 	IUFillNumber(&TempElN[1] , "el", "Elevation", "%4.1f", 0, 90, 0.01, 0);
 	IUFillNumberVector( &TempElNV,  TempElN, 2, getDeviceName(), "temp", "The fing temp", tegroup, IP_RW, 0.5, IPS_IDLE );
 	//if you want to use them uncomment the below line. 
-	defineNumber( &TempElNV );
+	defineProperty( &TempElNV );
 	IDSetNumber(&TempElNV, NULL );
 
 	//Corrections
 	IUFillSwitch( &corrS[0], "correct", "Auto Collimate", ISS_OFF );
 	IUFillSwitchVector( &corrSV, corrS, 1, getDeviceName(), "correct", "correct", miscgrp, IP_WO, ISR_NOFMANY, 0.5, IPS_IDLE );
-	defineSwitch(&corrSV);
+	defineProperty(&corrSV);
 
 	//Reference the struts
 	IUFillSwitch( &refS[0], "ref", "Reference", ISS_OFF );
 	IUFillSwitchVector( &refSV, refS, 1, getDeviceName(), "ref", "Reference", miscgrp, IP_WO, ISR_NOFMANY, 0.5, IPS_IDLE );
-	defineSwitch(&refSV);
+	defineProperty(&refSV);
 
 
 	IUFillText( cmdT, "cmd", "Command", "" );
 	IUFillTextVector( &cmdTV, cmdT, 1, getDeviceName(), "cmdv", "Command", miscgrp, IP_RW, 0.5, IPS_IDLE );
-	defineText( &cmdTV );
+	defineProperty( &cmdTV );
 
 
 	IUFillText( errT, "err", "Error", "No Error" );
 	IUFillTextVector( &errTV, errT, 1, getDeviceName(), "err", "Error", miscgrp, IP_RO, 0.5, IPS_IDLE );
-	defineText( &errTV );
+	defineProperty( &errTV );
 
 	IUFillText(&HexAddrT[0], "hexip", "Hexapod IP", "10.0.3.10" );
 	IUFillTextVector( &HexAddrTV, HexAddrT, 1, getDeviceName(), "hexipvp", "Hexapod IP Addr", "Main Control", IP_RW, 0.5, IPS_IDLE );
-	defineText(&HexAddrTV);
+	defineProperty(&HexAddrTV);
 	IDSetText(&HexAddrTV, NULL);
 
+return true;
 }
 
 
@@ -899,7 +982,9 @@ void Secondary::TimerHit()
 	setConnected(true, IPS_OK, NULL);
 		
 	Axis *iter;
-	INumberVectorProperty *IAxis;
+	//INumberVectorProperty *IAxis;
+	
+	INDI::PropertyViewNumber *IAxis;
 	bool isMoving;
 	int isReady = 0;
 	int errno;
@@ -1027,7 +1112,8 @@ void Secondary::TimerHit()
 
 		name[3] = iter->letter[0];
 		
-		IAxis = getNumber( name );
+		//IAxis = getNumber( name );
+		IAxis = getProperty(name).getNumber();
 		IAxis->np->value = iter->pos*unitconversion;
 		IDSetNumber( IAxis, NULL );
 	}
@@ -1125,7 +1211,8 @@ void Secondary::SetIAxisState(IPState state)
 
 bool Secondary::SetReadyState()
 {
-	INumberVectorProperty *IAxis;
+	//INumberVectorProperty *IAxis;
+	INDI::PropertyViewNumber *IAxis;
 	
 	Axis *iter;
 	char name[] = "PosX";
@@ -1136,7 +1223,8 @@ bool Secondary::SetReadyState()
 	for( iter=Pos; iter!=&Pos[6]; iter++ )
 	{
 		name[3] = iter->letter[0];
-		IAxis = getNumber( name );
+		//IAxis = getNumber( name );
+		IAxis = getProperty(name).getNumber();
 		if(!isReady)
 			IAxis->s = IPS_BUSY;
 		IDSetNumber(IAxis, NULL);
@@ -1160,7 +1248,8 @@ bool Secondary::SetReadyState()
 
 bool Secondary::SetMoveState()
 {
-	INumberVectorProperty *IAxis;
+	//INumberVectorProperty *IAxis;
+	INDI::PropertyViewNumber *IAxis;
 	
 	Axis *iter;
 	char name[] = "PosX";
@@ -1169,7 +1258,8 @@ bool Secondary::SetMoveState()
 	{
 		name[3] = iter->letter[0];
 		PI_IsMoving(ID, iter->letter, &isMoving );
-		IAxis = getNumber( name );
+		//IAxis = getNumber( name );
+		IAxis = getProperty(name).getNumber();
 		if(isMoving)
 			IAxis->s = IPS_BUSY;
 		else
@@ -1193,9 +1283,8 @@ void Secondary::deepcopy(Axis *copyto, Axis *copyfrom)
 		}
 }
 
-
 /**********************************************
-* GetTempAndEl
+* GetTempAndEl_old
 *	Retrieves the temperature and elevation
 *	from vatttel.
 *
@@ -1205,18 +1294,19 @@ void Secondary::deepcopy(Axis *copyto, Axis *copyfrom)
 *
 **********************************************/
 
-int Secondary::GetTempAndEl()
+int Secondary::GetTempAndEl_old()
 {
 
 	//get Elevation from NG server on vatttel
 	char rqbuff[200];
 	char ngbuff[200];
-	int ii;
+	int ii, pserr;
+	float ps_el=0,ps_strut=0;
 
 	try
 	{
     // Gets the whole return from telescope
-		ii=ng_request( (char *) "ALL ", rqbuff );
+		//ii=ng_request( (char *) "ALL ", rqbuff );
 	}
 	catch(const std::exception& e)
 	{
@@ -1249,7 +1339,12 @@ int Secondary::GetTempAndEl()
 
 
 	size_t str_begin = rqstr.find( " ", 40);
-  dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
+  //dummy_el = std::stof( rqstr.substr( str_begin+1,4 ) );
+  dummy_el = 45;
+
+ 
+
+
   // Fix to correct for telescope returning anything larger than 90.0 elevation
   if (dummy_el > 90.0) {
     dummy_el = 89.9999;
@@ -1262,14 +1357,13 @@ int Secondary::GetTempAndEl()
 	{
 		vatttel_counter=0;
 		gettingTemp=true;
-		//temp from tcs
 		//dummy_temp = GetStrutTemp( temperr );
-		//temp from cbw
-		dummy_temp = GetStrutTempCBW( temperr );
+		dummy_temp = 0;
 	}
 	else
 	{
-		dummy_temp = TempElN[0].value;
+		//dummy_temp = TempElN[0].value;
+		dummy_temp = 0;
 	}
 	
 	//if the read temp is reasonable
@@ -1328,7 +1422,126 @@ int Secondary::GetTempAndEl()
 }
 
 
+/**********************************************
+* GetTempAndEl
+*	Retrieves the temperature and elevation
+*	from projectsoft.
+*
+*
+*
+* Scott Swindell 10/2017
+* cj 5/2024 --  modified for projectsoft
+*
+**********************************************/
+
+int Secondary::GetTempAndEl()
+{
+
+	//get Elevation from NG server on vatttel
+	char rqbuff[200];
+	char ngbuff[200];
+	int ii, pserr;
+	float ps_el=0,ps_strut=0;
+
+//projectsoft can be slow to respond...  5 seconds delay
+if(vatttel_counter <= MAX_VATTTEL_CNT)
+	{
+	vatttel_counter++;
+	return 0;
+	}
+else
+	vatttel_counter=0;
+
+
+
+
+        pserr=projectsoft_el_strut(&ps_el, &ps_strut);
+	if(pserr==PROJECTSOFT_ERROR)
+	{
+		IDMessage(getDeviceName(), "**************************");
+                corrS[0].s = ISS_OFF;
+                corrSV.s = IPS_IDLE;
+                IDSetSwitch( &corrSV, "Communication Error with Projectsoft, turning off autocollimation");
+                return -1; 
+
+	}
+
+	
+	
+	char elerr[100];
+	char temperr[100];
+
+	double dummy_temp;
+	double dummy_el;
+	bool badread = true;
+
+
+//new projectsoft code  
+dummy_el=(double)ps_el;
+
+  // Fix to correct for telescope returning anything larger than 90.0 elevation
+  if (dummy_el > 90.0) {
+    dummy_el = 89.9999;
+  }
+  dummy_el *= (double)3.14159/180.0;
+
+dummy_temp=ps_strut;
+	
+	//if the read temp is reasonable
+  // Changing the range to +/- 30 so that it does not jump
+	if( dummy_temp > -30.0 && dummy_temp < 30.0 )
+	{
+		temp = dummy_temp;
+		badread = false;
+
+		// it was a good read 
+		// so let the user know
+		// by updating temp
+		TempElN[0].value = temp;
+		IDSetNumber( &TempElNV, NULL );
+		
+	}
+
+	//if not reasonable
+  // Changing the range to +/- 30 so that it does not jump
+	else
+	{//use the users temperature if its reasonable
+    IDMessage(getDeviceName(), "Temperature read was bad: %f", dummy_temp);
+		if(TempElN[0].value > -30.0 && TempElN[0].value < 30.0)
+			temp = TempElN[0].value;
+	}
+
+	if( dummy_el >0 && dummy_el < 3.14159/2.0 + 0.1*3.14159/180 )
+	{//if read_el is resonable
+		//update el for autocollimation and user
+    //IDMessage(getDeviceName(), "Elevation read was good");
+		el = dummy_el;
+		TempElN[1].value=el*180/3.14159;
+		IDSetNumber(&TempElNV, NULL);		
+
+		badread = false;
+	}
+	else
+	{
+    IDMessage(getDeviceName(), "Elevation read was bad: %f", dummy_el);
+		//read the old value or 
+		// the user input. 
+		el = TempElN[1].value;
+	}
+
+	//el = TempElN[1].value*3.14159/180.0;
+	if( badread )
+	{
+		IDMessage(getDeviceName(), "Erroneous temp or elevation read temp=%f el=%f", dummy_temp, dummy_el );
+		return -1;
+	}
+
+	return 0;
+}
+
+
 bool Secondary::MoveNext()
 {
 	MoveAbs(ID, NextPos );
+	return true;
 }

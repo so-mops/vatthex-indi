@@ -1,51 +1,65 @@
 #########################################
 # makefile for vatthex_indi	  	#
 ################objects##################
-OLD_OBJS = vatt_secondary.o vatttel_com.o ngclient.o
-VATTHEX-INDI-OBJS = vatthex.o vatt_secondary.o vatttel_com.o ngclient.o readcbw.o mjson.o
+#OLD_OBJS = vatt_secondary.o vatttel_com.o ngclient.o
+#VATTHEX-INDI-OBJS = vatthex.o vatt_secondary.o vatttel_com.o ngclient.o projectsoft.o
+VATTHEX-INDI-OBJS = vatthex.o vatt_secondary.o projectsoft.o
+TEST-PROJECTSOFT-OBJS = testprojectsoft.o projectsoft.o
 LIBVATTHEX_OBJS = vatthex.o
+TESTHEX_OBJS = vatthex.o test.o
 ###############binaries##################
-all: clean hextest indi-vatt-pihex testcbw
+#all: clean hextest indi-vatt-pihex 
+all: clean indi-vatt-pihex testprojectsoft
 
-all-old: libvatthex.so VATTHEX-INDI-old 
+#all-old: libvatthex.so VATTHEX-INDI-old 
 
-VATTHEX-INDI-old:  $(OLD_OBJS)
-	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI-old -L/usr/local/lib -lpi_pi_gcs2 -lvatthex
+#VATTHEX-INDI-old:  $(OLD_OBJS)
+#	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI-old -LPI -lpi_pi_gcs2 -lvatthex
+	#g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI-old -L/usr/local/lib -lpi_pi_gcs2 -lvatthex
 
 indi-vatt-pihex:  $(VATTHEX-INDI-OBJS)
-	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o indi-vatt-pihex -L/usr/local/lib -lpi_pi_gcs2 -lcurl 
+	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o indi-vatt-pihex -LPI -lpi_pi_gcs2 -IPI 
+	#g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o indi-vatt-pihex -L/usr/local/lib -lpi_pi_gcs2 
 
-testcbw: mjson.o readcbw.o testcbw.o vatttel_com.o
-	gcc $^ -lcurl -o testcbw
+testprojectsoft:  $(TEST-PROJECTSOFT-OBJS)
+	gcc $^ -o testprojectsoft
 
 vatt_secondary.o: vatt_secondary.cpp
 	g++ -std=c++11 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -I/usr/local/include/PI
+	#g++ -std=c++11 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -IPI
 
-vatttel_com.o: vatttel_com.c
-	gcc -c vatttel_com.c
+#vatttel_com.o: vatttel_com.c
+#	gcc -c vatttel_com.c
 #g++ -std=c++11 -c vatttel_com.c
 
-ngclient.o: ngclient.c
-	gcc -c ngclient.c 
+#ngclient.o: ngclient.c
+#	gcc -c ngclient.c 
+
+projectsoft.o: projectsoft.c
+	gcc -c projectsoft.c
+
+testprojectsoft.o: testprojectsoft.c
+	gcc -c testprojectsoft.c
+
 #g++ -c ngclient.c
 
 vatthex.o: vatthex.c
 	gcc -c -fPIC vatthex.c -IPI
 
-mjson.o: mjson.c mjson.h
-	gcc -c mjson.c
-        
-readcbw.o: readcbw.c
-	gcc -c readcbw.c
+#libvatthex.so: $(LIBVATTHEX_OBJS)
+#	gcc -shared $^ -IPI -o libvatthex.so
 
-testcbw.o: testcbw.c
-	gcc -c testcbw.c
+#hextest:
+#	gcc test.c -o hextest -I./PI/include -Llib -lvatthex -lpi_pi_gcs2
 
-libvatthex.so: $(LIBVATTHEX_OBJS)
-	gcc -shared $^ -IPI -o libvatthex.so
+test.o:
+	gcc -c test.c
 
-hextest:
-	gcc test.c -o hextest -I./PI/include -Llib -lvatthex -lpi_pi_gcs2
+testhex: $(TESTHEX_OBJS)
+	gcc $^ -o testhex -IPI -lpi_pi_gcs2
+
+#testhex.o: testhex.c
+#	gcc -c testhex.c
 
 ###############Utilities################
 install: 
@@ -69,6 +83,6 @@ install:
 # END FIX
 
 clean:
-	rm -f *.o libvatthex.so indi-vatt-pihex hextest testcbw VATTHEX-INDI-old
+	rm -f *.o libvatthex.so indi-vatt-pihex hextest testprojectsoft
 
 
