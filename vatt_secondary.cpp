@@ -1150,7 +1150,7 @@ int Secondary::GetTempAndEl()
     else
     {
         IDMessage(getDeviceName(), "Elevation read was bad: %f", dummy_el);
-        el = TempElN[1].value;
+        el = TempElN[1].value * 3.14159 / 180.0;
     }
 
     if (badread)
