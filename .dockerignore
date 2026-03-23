@@ -1,9 +1,13 @@
 .git
+.gitignore
+
 *.o
-*.so
 *.a
-*.log
 *.working
 *.eof
 *.orig
+
+*.log
+vatthex-data/
+
 testprojectsoft

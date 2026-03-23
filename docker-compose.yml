@@ -1,0 +1,10 @@
+services:
+  indi-vatt-pihex:
+    image: vatthex:latest
+    container_name: indi-vatt-pihex
+    stdin_open: true
+    tty: false
+    environment:
+      VATTHEX_DATA_DIR: /var/lib/vatthex
+    volumes:
+      - ./vatthex-data:/var/lib/vatthex

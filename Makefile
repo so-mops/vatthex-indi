@@ -18,14 +18,14 @@ all: clean indi-vatt-pihex testprojectsoft
 	#g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o VATTHEX-INDI-old -L/usr/local/lib -lpi_pi_gcs2 -lvatthex
 
 indi-vatt-pihex:  $(VATTHEX-INDI-OBJS)
-	g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o indi-vatt-pihex -LPI -lpi_pi_gcs2 -IPI 
+	g++ -std=c++17 $^ -lindidriver -lnova -lpthread -lz -o indi-vatt-pihex -LPI -lpi_pi_gcs2 -IPI 
 	#g++ -std=c++11 $^ -lindidriver -lnova -lpthread -lz -o indi-vatt-pihex -L/usr/local/lib -lpi_pi_gcs2 
 
 testprojectsoft:  $(TEST-PROJECTSOFT-OBJS)
 	gcc $^ -o testprojectsoft
 
 vatt_secondary.o: vatt_secondary.cpp
-	g++ -std=c++11 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -I/usr/local/include/PI
+	g++ -std=c++17 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -I/usr/local/include/PI
 	#g++ -std=c++11 -c vatt_secondary.cpp -I/usr/include/libindi -Ilibvatthex/include -IPI
 
 #vatttel_com.o: vatttel_com.c
