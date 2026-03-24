@@ -182,6 +182,10 @@ BOOL MoveOneAxis(int ID, Axis *xp )
     return true;
 }
 
+/*
+ * Move all hexapod axes to the requested absolute positions
+ * and wait until the reported positions are within tolerance.
+ */
 BOOL MoveAbs(int ID, Axis *next )
 {
 	Axis *iter_next;
@@ -225,6 +229,10 @@ BOOL MoveAbs(int ID, Axis *next )
 	return true;
 }
 
+/*
+ * Send a raw PI command to the controller and collect the
+ * response into the caller-provided buffer.
+ */
 int GenericCommand(int ID, const char* cmd, char resp[], int respSize)
 {
     char temp[200];
