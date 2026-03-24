@@ -9,7 +9,7 @@
 #ifndef cpp
 #define false 0
 #define true 1
-#define MICRONS2MM 1/1000.0
+#define MICRONS2MM (1.0 / 1000.0)
 #endif
 
 /*A convenience wrapper for the PI_GCS2 stuff.
@@ -190,77 +190,89 @@ BOOL MoveAbs(int ID, Axis *next )
 	double offset;
 	double thresh = 0.001;
 	BOOL test = true;
-	GetHexPos( ID, current );
 
-	//Move then
-	for (iter_next=next; iter_next!=next+NAXES; iter_next++)
+	if (!GetHexPos(ID, current))
+		return false;
+
+	for (iter_next = next; iter_next != next + NAXES; iter_next++)
 	{
-		if( !PI_MOV(ID, iter_next->letter, &iter_next->pos ) )
+		if (!PI_MOV(ID, iter_next->letter, &iter_next->pos))
 		{
 			printf("Move not working!!\n");
 			return false;
 		}
 	}
-	while(test)
+
+	while (test)
 	{
 		test = false;
-		for(int ii=0; ii<NAXES; ii++)
+		for (int ii = 0; ii < NAXES; ii++)
 		{
 			iter_next = next + ii;
 			iter_curr = current + ii;
-			offset = iter_next->pos-iter_curr->pos;
+			offset = iter_next->pos - iter_curr->pos;
 
 			printf("%s:%f\t", iter_next->letter, offset);
-			if( fabs(offset) > thresh )
+			if (fabs(offset) > thresh)
 				test = true;
 		}
 		printf("\n");
-		GetHexPos(ID, current);
 
+		if (!GetHexPos(ID, current))
+			return false;
 	}
+
 	return true;
 }
 
 int GenericCommand(int ID, const char* cmd, char resp[], int respSize)
 {
+    char temp[200];
+    int iAnswerSize = 0;
 
-	char temp[200];
-	int  iAnswerSize = 0;
-	strcpy(resp, "");
-	if( !PI_GcsCommandset( ID, cmd )  ) 
-	{
-		printf( "Could not send command!\n" );
-		return 0;
-	}
-	
+    if (resp == NULL || respSize <= 0)
+        return 0;
 
-	while( iAnswerSize == 0 )
-	{
-		PI_GcsGetAnswerSize( ID, &iAnswerSize );
-		//check again in a quarter of a second
-		usleep(250000);
-	}
+    resp[0] = '\0';
 
-	while( 1 )
-	{
-		
-		PI_GcsGetAnswerSize( ID, &iAnswerSize );
-		if(iAnswerSize == 0)
-			break;
-		
-		if( !PI_GcsGetAnswer(ID, temp, iAnswerSize ) )
-		{
-			break;
-			
-		}
-		else
-		{
-			
-			strncat(resp, temp, strlen(temp) );
-		}
-	}
+    if (!PI_GcsCommandset(ID, cmd))
+    {
+        printf("Could not send command!\n");
+        return 0;
+    }
 
-	return 1;
+    while (iAnswerSize == 0)
+    {
+        PI_GcsGetAnswerSize(ID, &iAnswerSize);
+        usleep(250000);
+    }
+
+    while (1)
+    {
+        PI_GcsGetAnswerSize(ID, &iAnswerSize);
+        if (iAnswerSize == 0)
+            break;
+
+        if (iAnswerSize >= (int)sizeof(temp))
+            iAnswerSize = (int)sizeof(temp) - 1;
+
+        if (!PI_GcsGetAnswer(ID, temp, iAnswerSize))
+        {
+            break;
+        }
+
+        temp[iAnswerSize] = '\0';
+
+        size_t used = strlen(resp);
+        size_t remaining = (size_t)respSize - used - 1;
+
+        if (remaining == 0)
+            break;
+
+        strncat(resp, temp, remaining);
+    }
+
+    return 1;
 }
 
 /********************************
@@ -320,11 +332,10 @@ void InitAllAxes(Axis *xp)
 *	If you don't want to deal with 
 *	the whole array and jus tplay with one
 ***************************************/
-BOOL InitAxis(Axis *xp, axis_ii ii)
+void InitAxis(Axis *xp, axis_ii ii)
 {
 	xp->letter = (char *) AXIS_NAMES[ii];
 	xp->ii = ii;
-
 }
 
 /*********************************

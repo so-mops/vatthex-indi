@@ -17,7 +17,6 @@ typedef struct axis
     char * letter;
 } Axis;
 
-
 //prototypes
 void usage( char[] );
 BOOL MoveAbs(int ID, Axis *next);
@@ -26,7 +25,7 @@ BOOL MoveOneAxis(int ID, Axis *xp );
 void PrintHexPos( Axis *xp );
 BOOL uncorrect( Axis xp[], double el, double temp );
 BOOL correct( Axis xp[], double el, double temp );
-BOOL InitAxis(Axis xp[], axis_ii ii);
+void InitAxis(Axis *xp, axis_ii ii);
 void InitAllAxes( Axis xp[] );
 BOOL ReferenceIfNeeded(int ID, Axis *xp);
 int GenericCommand(int ID, const char* cmd, char resp[], int respSize);
