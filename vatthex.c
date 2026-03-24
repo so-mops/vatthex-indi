@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include "vatthex.h"
+
 #ifndef cpp
 #define false 0
 #define true 1
 #define MICRONS2MM 1/1000.0
 #endif
-
 
 /*A convenience wrapper for the PI_GCS2 stuff.
 
@@ -18,7 +18,6 @@
 	each axis rather than a single character
 	string.
 */
-
 
 /* -------The following comments and code are from -----
    -------From secmove.c in the vatt tcs teld dir. -------
@@ -51,7 +50,6 @@ https://lavinia.as.arizona.edu/~tscopewiki/doku.php?id=vatt:legacy_psuedo-hexpod
 #define DECENY  4
 #define FOCUS   5
 
-
 double sec_c2m[M][C] = {
 //    FTC,   FLC,  CTC , CLC
 	//{ 0.0  , 0.0  , 0.0 , 141.9   , }, //DECENX == X Microns
@@ -74,60 +72,9 @@ double sec_z[M] = {
 
 //----------End secmove.c stuff------------------------------
 
-
 //Global vars for convenience
 const char * AXIS_NAMES[] = {"X", "Y", "Z", "W", "V", "U"};
 const int NAXES = sizeof(AXIS_NAMES)/sizeof(AXIS_NAMES[0]);
-
-
-/*********************************
-* sec_update_corr
-*
-* Copied from secmove.c in from the
-* the vatt tcs that runs on vatttel
-* 
-*
-*
-void sec_update_corr ()
-{
-        int     m, c;
-        double  sc;
-        double  temp, cosel;
-        double d[C];
-        double cos();
-
-        sec_update_tl ();
-        temp = sec_temperature;
-        cosel = cos(sec_elevation);
-
-        //sanity checks
-        
-        if (sec_min_temp < temp && temp < sec_max_temp) {
-            sec_lastgood_temp = temp;
-        } else {
-            temp = sec_lastgood_temp;
-        }
-        ifif (sec_min_cosel < cosel && cosel
-            sec_lastgood_coselsec_lastgood_cosel = ;
-        } else {
-            cosel = ;
-        }
-
-        d[FTC] = sec_autofocus ? temp : 0.0;
-        d[FLC] = sec_autofocus ? cosel : 0.0;
-        d[CTC] = sec_autocoll ? temp : 0.0;
-        d[CLC] = sec_autocoll ? cosel : 0.0;
-
-        for (m = 0; m < M; m++) {
-            sc = 0.0;
-            for (c = 0; c < C; c++) {
-                sc += sec_c2m[m][c] * d[c];
-            }
-            sec_c[m] = sc;
-        }
-}
-*/
-
 
 int GetError(int ID, char errBuff[], int buffSize )
 {
@@ -143,15 +90,11 @@ int GetError(int ID, char errBuff[], int buffSize )
 
 }
 
-
 /**********************************
 *correct
 * Adds corections due to strut 
 * temp and the elevation of the 
 * telescope. 
-*
-*
-*
 **********************************/
 
 BOOL correct( Axis xp[], double el, double temp )
@@ -175,13 +118,6 @@ BOOL correct( Axis xp[], double el, double temp )
 	return true;
 
 }
-
-double loguncorrect(double pos, double el, double temp)
-{
-  
-}
-
-
 
 BOOL uncorrect( Axis xp[], double el, double temp )
 {
@@ -211,10 +147,6 @@ BOOL uncorrect( Axis xp[], double el, double temp )
  *	xp-> Axis struct to determine which axis to move
  *  dval-> position to move the axis to in MM
  * Descr: move one axis using the Axis struct
- *
- *
- *
- *
  ***************************************/
 BOOL ReferenceIfNeeded(int ID, Axis *xp)
 {
@@ -286,9 +218,8 @@ BOOL MoveAbs(int ID, Axis *next )
 		GetHexPos(ID, current);
 
 	}
-	return 0;
+	return true;
 }
-
 
 int GenericCommand(int ID, const char* cmd, char resp[], int respSize)
 {
@@ -332,7 +263,6 @@ int GenericCommand(int ID, const char* cmd, char resp[], int respSize)
 	return 1;
 }
 
-
 /********************************
 *GetHexPos
 *Args: ID => identifier for PI communcation
@@ -369,8 +299,6 @@ BOOL GetHexPos( int ID, Axis *xp )
 *
 *	Descr: Initiialize all axes. 
 *	So the array is ready to be populated
-*	
-*	
 ***************************************/
 void InitAllAxes(Axis *xp)
 {
@@ -391,7 +319,6 @@ void InitAllAxes(Axis *xp)
 *	Descr: Initiialize a single axis. 
 *	If you don't want to deal with 
 *	the whole array and jus tplay with one
-*	
 ***************************************/
 BOOL InitAxis(Axis *xp, axis_ii ii)
 {
@@ -400,15 +327,11 @@ BOOL InitAxis(Axis *xp, axis_ii ii)
 
 }
 
-
 /*********************************
 *	PrintHexPos
 *	Args: xp == Array of axis postions
 *	Description: Print the axis names
 *and positions. 
-*
-*
-*
 *************************************/
 void PrintHexPos( Axis *xp )
 {
@@ -426,71 +349,3 @@ void usage(char exe[])
 	printf("Usage: %s <port_number> <zpos>\n", exe);
 	printf("Like: %s 5200 0.5\n", exe);
 }
-
-/*
-int main(int argc, char * argv[])
-{
-	int port;
-	double zpos;
-	if (argc != 3)
-	{
-				usage(argv[0]);
-				exit(-1);
-	}
-	else
-	{
-		port = atoi(argv[1]);
-		zpos = atof(argv[2]);
-		
-		if(zpos > 0.99 || zpos < -0.99)
-		{
-			usage(argv[0]);
-			exit(-1);
-		}
-			
-	}
-	const char *szAddressToConnect = "localhost";
-	int ID = PI_ConnectTCPIP(szAddressToConnect,port);
-	printf("iD is %d\n", ID);
-	char szIDN[200];
-	char szPOS[200];
-	double dPos;
-	Axis Pos[NAXES];
-	Axis nPos[NAXES];
-
-
-	
-    if(PI_qIDN(ID,szIDN,199) == FALSE)
-    {
-        printf("qIDN failed. Exiting.\n");
-        return FALSE;
-    }
-	else
-		printf("the qIDN %s\n", szIDN);
-	
-	//Populate the position array
-	if ( !GetHexPos( ID, Pos ) )
-		return -1;	
-	for(Axis *iter=Pos; iter!=Pos+NAXES; iter++)
-	{
-		printf("%s = %f\n", iter->letter, iter->pos );
-	}
-	
-	// Reference Z axis
-	if(ReferenceIfNeeded(ID, Pos[ZZ].letter) == false)
-    {
-        printf( "Not referenced, Referencing failed.\n" );
-        return FALSE;
-    }
-	
-	//move z axis
-	printf("Trying to move %s axis\n", Pos[ZZ].letter);
-	Pos[ZZ].pos = zpos;
-	MoveAbs(ID, Pos );
-	//MoveOneAxis( ID, Pos+ZZ, zpos );
-	PrintHexPos(Pos);
-	return 0;
-	
-
-}
-*/
