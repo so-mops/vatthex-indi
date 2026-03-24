@@ -1,55 +1,24 @@
-# VATT Hexapod Control Software with INDI driver
+# VATT Hexapod INDI Driver
 
-This is the repository for the VATT hexapod source code. It runs the PI hexapod that positions the VATT secondary mirror.
+This repository contains the VATT secondary hexapod control software and INDI driver. It communicates with the PI hexapod controller that positions the VATT secondary mirror.
 
-## Undockerized
-This does not use docker anymore. Simply make the build and the indiserver launcher on desktop runs it on port 7600
+## Current deployment
 
-*Back to the README.*
-_______
+The current deployment model uses a Docker container for the driver while allowing an existing host `indiserver` to launch it through a wrapper script.
+
+The main runtime pieces are:
+
+- `vatt_secondary.cpp/.h` — main INDI driver logic
+- `vatthex.c/.h` — low-level PI hexapod helper routines and correction model
+- `projectsoft.c/.h` — telescope elevation and strut temperature input
+- `docker_wrapper.sh` — launches the driver container for use by the host INDI server
+- `Dockerfile` — builds the container image
+
+Legacy and retired support files have been moved to `archive/`.
 
 ## Build
 
-Simply use the Makefile with 
+Build the driver locally with:
 
-```
+```bash
 make
-```
-This will build the ```indi-vatt-pihex``` binary. 
-
-## Current implementation at VATT
-This software is an INDI driver and is meant to be run with an indiserver. Typically that looks something like:
-
-```
-indiserver ./indi-vatt-pihex
-```
-
-## Files
-vatttel_com.c/.h:  This is the communication with vatttel using the old mixed ascii/binary vatt protocol.  we use this only to get the temperature
-
-ngclient.c/.h: this is the communication with vatttel using the newer ng protocol.  We use this to get the elevation
-
-vatthex.c/.h: this is the communication witht pi hexapod.  Its basically a wrapper around the pi library
-
-vatt_secondary.cpp/.h: this is the meat of the software.  This has all the algorithms and the indi driver built in. 
-
-readcbw.d/.h: these are some routines to read temperatures from the Control by Web module.  replaces vatttel.c/.h
-
-testcbw.c: this is a small program that tests the readout of both CBW and TCS strut temps
-
-mjson.c/.h: a small library for parsing json in a c program
-
-test.c: This is a set of command line tools to test the PI hexapod.
-
-PI/libpi_pi_gcs2-3.9.0.a, PI/libpi_pi_gcs2.so.3.9.0, PI/PI_GCS2_DLL.h:  these are the PI supplied libs and header
-
-
-## Old Docker Info [unused, kept for historical reasons]
-Because of the portability issues with INDI, it is currently run in a [docker container](https://hub.docker.com/r/srswinde/indihex). This container can be built with [build.sh](https://github.com/so-mops/vatthex-indi/blob/master/build.sh). Building the dockerfile will also make the indidriver and build all the 
-libvatthex stuff. See [the Dockerfile](https://github.com/so-mops/vatthex-indi/blob/master/Dockerfile) for details. 
-
-It could be run standalone by simply running the indiserver command as shown above.
-
-The docker container is run in docker-compose fashion so the INDI driver is bundled with the INDI webclient and the webserver. As it stands now both this INDI driver and the [vatt-guidebox](https://github.com/so-mops/vatt-guidebox) INDI drivers are run in the same docker-compose bundle. The docker-compose file can be found [here](https://github.com/srswinde/indi_webclient/blob/master/docker-compose-vatt-guidebox.yml). 
-
-To have the docker-compose file run on startup we build a systemd service. This process is described in the [indi_webclient readme](https://github.com/srswinde/indi_webclient/blob/master/README.md). 
