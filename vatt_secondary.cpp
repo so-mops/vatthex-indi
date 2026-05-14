@@ -729,7 +729,7 @@ bool Secondary::_GetHexPos(Axis *hexpos)
 	{
 		retn = false;
 		IDMessage( getDeviceName(), "Failed to retrieve position" );
-		isConnected();
+		//isConnected();
 		commerr_count++;
 	}
 	else
