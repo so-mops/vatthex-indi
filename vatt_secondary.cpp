@@ -22,7 +22,7 @@
 #define PI_PORTNUM 50000
 #define MILLI2MICRON 1e3
 #define DEG2ASEC 3600.0
-#define MAX_COMMERR 0
+#define MAX_COMMERR 5
 
 
 /*
@@ -1211,26 +1211,25 @@ void Secondary::SetIAxisState(IPState state)
 
 bool Secondary::SetReadyState()
 {
-	//INumberVectorProperty *IAxis;
-	INDI::PropertyViewNumber *IAxis;
-	
-	Axis *iter;
-	char name[] = "PosX";
-	int isReady;
-	if(  !PI_IsControllerReady(ID, &isReady) )
-	 isReady = 0;
-	
-	for( iter=Pos; iter!=&Pos[6]; iter++ )
-	{
-		name[3] = iter->letter[0];
-		//IAxis = getNumber( name );
-		IAxis = getProperty(name).getNumber();
-		if(!isReady)
-			IAxis->s = IPS_BUSY;
-		IDSetNumber(IAxis, NULL);
-		
-	}
-	return (bool) isReady;	
+    INDI::PropertyViewNumber *IAxis;
+    Axis *iter;
+    char name[] = "PosX";
+    int isReady = 0;
+
+    if (!PI_IsControllerReady(ID, &isReady))
+        isReady = 0;
+
+    for (iter = Pos; iter != &Pos[6]; iter++)
+    {
+        name[3] = iter->letter[0];
+        IAxis = getProperty(name).getNumber();
+
+        IAxis->s = isReady ? IPS_OK : IPS_BUSY;
+
+        IDSetNumber(IAxis, NULL);
+    }
+
+    return (bool)isReady;
 }
 
 /****************************
