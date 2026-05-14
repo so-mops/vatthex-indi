@@ -22,7 +22,7 @@
 #define PI_PORTNUM 50000
 #define MILLI2MICRON 1e3
 #define DEG2ASEC 3600.0
-#define MAX_COMMERR 5
+#define MAX_COMMERR 15
 
 
 /*
